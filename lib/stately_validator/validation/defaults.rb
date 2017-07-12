@@ -6,6 +6,7 @@ module StatelyValidator
     require "stately_validator/validation/length"
     require "stately_validator/validation/custom"
     require "stately_validator/validation/comparison"
+    require "stately_validator/validation/matches"
     
   end
 end
