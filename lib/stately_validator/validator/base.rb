@@ -1,7 +1,6 @@
 module StatelyValidator
   class Validator
     class Base
-    
      
       def self.key(name_str = nil)
         unless name_str.nil? || @name == name_str
@@ -19,6 +18,15 @@ module StatelyValidator
         
         # We just need to log the validations, in order, for when we actually call the validation
         @validations << { fields: fields, validation: validation, options: options }
+      end
+      
+      # Sometimes, we may want to execute an action during the flow of validations.
+      # This would be used to generate an item needed to subsequent validations
+      #
+      # The fields argument, in this case, would be all the fields that need to be free-and-clear of errors#
+      # in order to proceed with the execution
+      def self.execute(fields, method, options = {})
+        @validations << { execute: true, fields: fields, options: options }
       end
       
       def self.validations
@@ -69,6 +77,15 @@ module StatelyValidator
         @states || {}
       end
       
+      def values
+        @values || {}
+      end
+      
+      def set_value(name, value)
+        @values = {} unless @values.is_a?(Hash)
+        @values[name] = value
+      end
+      
       def validate(params = nil)
         if params.is_a?(Hash)
           @ran = false
@@ -92,6 +109,12 @@ module StatelyValidator
           # Now we are going to skip based on internal errors, external errors and state
           next if skip_validation?(opts)
           
+          # If we are executing, then just execute and go to the next step
+          if details[:execute]
+            execute opts
+            next
+          end
+          
           # Attempt the validation
           err = Validation.validate(vals, details[:fields], details[:validation], self, opts)
           # Pass if the error is nil or is TrueClass
@@ -111,13 +134,16 @@ module StatelyValidator
       
       protected
       
-      def set_value(name, value)
-        @values = {} unless @values.is_a?(Hash)
-        @values[name] = value
-      end
-      
       def self.validations
         @validations || []
+      end
+      
+      private
+      
+      def execute(opts)
+        return unless opts[:method]
+        return send(opts[:method].to_sym) if respond_to?(opts[:method].to_sym) 
+        return opts[:class].send(opts[:method].to_sym, self) if opts[:class].is_a?(Module) && opts[:class].respond_to?(opts[:method].to_sym)
       end
       
       def skip_validation?(opts)
