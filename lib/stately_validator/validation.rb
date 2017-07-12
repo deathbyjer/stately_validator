@@ -20,17 +20,22 @@ module StatelyValidator
     
     def self.validate(values, names = [], validation = nil, validator = nil, options = {})
       return unless options.is_a?(Hash) && validation
-      validation = validation_for(validation) if validation.is_a?(Symbol)
+      validations = validation_for(validation) if validation.is_a?(Symbol)
       
-      # Skip if the value is empty and we don't process on nil
-      return unless validation.on_nil || Utilities.to_array(values).any?{|v| not v.nil? || v.to_s.empty?}
-      
-      # Now we are going to skip if we have states, and we don't match them
-      # TODO
-      
-      # Now process the validation
-      options[:validator] = validator
-      result = validation.validate values, names, options
+      result = nil
+      validations.each do |validation|
+        # Skip if the value is empty and we don't process on nil
+        next unless validation.on_nil || Utilities.to_array(values).any?{|v| not v.nil? || v.to_s.empty?}
+        
+        # Now we are going to skip if we have states, and we don't match them
+        # TODO
+        
+        # Now process the validation
+        options[:validator] = validator
+        result = validation.validate(values, names, options) || result
+        next if result.nil? || result == true
+        return result
+      end
       result
     end
     
