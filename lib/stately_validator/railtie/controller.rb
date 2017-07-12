@@ -6,8 +6,8 @@ module StatelyValidator
       
       def validate_with(name, options = {})
         # Find the validator
-        validator_class = load_validator name
-        return nil unless validator_class
+        validator = load_validator name
+        return nil unless validator
         
         validator.set_action_controller self
         validator.validate(params) unless options[:dont_validate]
