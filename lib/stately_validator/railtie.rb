@@ -11,7 +11,7 @@ module StatelyValidator
       end
       
       # Load everything in /validators, so that the keys can be properly loaded
-      Dir[(Rails.root + "app/validators/*.rb")].each do |f| 
+      Dir[(Rails.root + "app/validators/**/*_validator.rb")].each do |f| 
         load f   
       end
     end
