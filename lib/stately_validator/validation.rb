@@ -8,7 +8,14 @@ module StatelyValidator
     def self.register_validation(validation)
       @validations = {} unless @validations.is_a?(Hash)
       @validations[validation.key.to_sym] = [] unless @validations[validation.key.to_sym].is_a?(Array)
-      @validations[validation.key.to_sym] << validation
+      
+      # Ensure we keep only one of each class of validator per key, at the original position but using the most current validator
+      key = validation.key.to_sym
+      if @validations[key].include?(validation)
+        @validations[key][@validations[key].index(validation)] = validation
+      else
+        @validations[key] << validation
+      end
     end
     
     def self.validate(values, names = [], validation = nil, validator = nil, options = {})
