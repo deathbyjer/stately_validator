@@ -17,9 +17,8 @@ module StatelyValidator
     
     # And include this object to the Base
     require "stately_validator/validator/base"
-    
     class Base
-      include Rails 
+      include StatelyValidator::Validator::Rails
     end
   end
 end
