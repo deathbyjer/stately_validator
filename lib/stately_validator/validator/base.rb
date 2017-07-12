@@ -112,7 +112,7 @@ module StatelyValidator
           
           # If we are executing, then just execute and go to the next step
           if details[:execute]
-            execute opts
+            execute details[:method], opts
             next
           end
           
