@@ -104,7 +104,7 @@ module StatelyValidator
           next if (Utilities.to_array(details[:fields]) + (opts[:as] ? [opts[:as]] : [])).any?{|k| @errors[k]}
         
           # Gather the values to send in
-          vals = Utilities.to_array(details[:fields]).map{|f| @params[f]}
+          vals = Utilities.to_array(details[:fields]).map{|f| @values[f] || @params[f]}
           vals = vals.first if vals.count == 1
           
           # Now we are going to skip based on internal errors, external errors and state
