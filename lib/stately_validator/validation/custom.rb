@@ -13,7 +13,7 @@ module StatelyValidator
     class Custom < Base
       key :custom
       
-      include Expectations
+      extend Expectations
       
       def self.validate(values, name = [], options = {})
         # What is the expected output of this function? If it doesn't match, then throw the error
@@ -36,7 +36,7 @@ module StatelyValidator
     class Method < Base
       key :method
       
-      include Expectations
+      extend Expectations
       
       def self.validate(values, name = [], options = {})
         return nil unless options[:method].is_a?(Symbol)
