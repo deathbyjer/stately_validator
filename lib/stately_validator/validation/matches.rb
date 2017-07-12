@@ -9,7 +9,7 @@ module StatelyValidator
         
         if options[:regex]
           Utilities.to_array(options[:regex]).each do |regex|
-            return "incorrect" unless regex.is_a?(Regexp) && Utilities.to_array(values).all?{|v| v.to_s =~ regex}}
+            return "incorrect" unless regex.is_a?(Regexp) && Utilities.to_array(values).all?{|v| v.to_s =~ regex}
           end
         end
         true
