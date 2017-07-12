@@ -126,7 +126,7 @@ module StatelyValidator
       # We are going to evaluate the skip array and see if all the values 
       def evaluate_skip_array(conditions, operator = :and)
         conditions = [ conditions ] unless conditions.is_a?(Array)
-        operator == :and ? conditions.all?{|c| evaluate_skip_condition(c, operator)} : conditions.any?{|c| evaluate_skip_condition(c, option)}
+        operator == :and ? conditions.all?{|c| evaluate_skip_condition(c, operator)} : conditions.any?{|c| evaluate_skip_condition(c, operator)}
       end
       
       def evaluate_skip_condition(condition, operator = :and)
