@@ -6,12 +6,12 @@ module StatelyValidator
       
       # We may want to globally set the state for any validators loaded. 
       # Things like "is_logged_in" or "is_admin"
-      def set_validator_state(state)
-        return unless state
-        state = state.to_sym
+      def set_validator_state(name, value = true)
+        return unless name
+        name = name.to_sym
         
-        @validator_states = [] unless @validator_states.is_a?(Array)
-        @validator_states << state unless @validator_states.include?(state)
+        @validator_states = {} unless @validator_states.is_a?(Hash)
+        @validator_states[name] = value
       end
       
       def validate_with(name, options = {})
@@ -20,7 +20,7 @@ module StatelyValidator
         return nil unless validator
         
         validator.set_action_controller self
-        (@validator_states || []).each {|s| validator.set_state s}
+        (@validator_states || {}).each {|n,v| validator.set_state n, v}
         
         validator.validate(params) unless options[:dont_validate]
         validator
