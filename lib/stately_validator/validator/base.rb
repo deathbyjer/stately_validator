@@ -61,9 +61,14 @@ module StatelyValidator
       # This is how we can set some internal variables, which are useful for 
       # validating. 
       # A note: An internal will be overloaded 
-      def set_state(name, value)
+      def set_state(name, value = true)
         @states = {} unless @states.is_a?(Hash)
         @states[name.to_sym] = value
+      end
+      
+      def state?(name)
+        return false unless @states.is_a?(Hash)
+        @states[name.to_sym]
       end
       
       def params
@@ -122,7 +127,14 @@ module StatelyValidator
           next if err.nil? || err == true
           
           err = opts[:error] if opts[:error]
-          (opts[:internal] ? @internal : @errors)[opts[:as] || Utilities.to_array(details[:fields]).first] = err
+          
+          # We should be able to set multiple error names to the same thing
+          if opts[:as].is_a?(Array)
+            opts[:as].each { |as| (opts[:internal] ? @internal : @errors)[as] = err }
+          # But to do that, the :as variable needs to be explicit. Otherwise, default to the first parameter
+          else
+            (opts[:internal] ? @internal : @errors)[opts[:as] || Utilities.to_array(details[:fields]).first] = err
+          end
         end
         
         @ran = true
