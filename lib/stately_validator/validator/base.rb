@@ -25,8 +25,9 @@ module StatelyValidator
       #
       # The fields argument, in this case, would be all the fields that need to be free-and-clear of errors#
       # in order to proceed with the execution
-      def self.execute(fields, method, options = {})
-        @validations << { execute: true, fields: fields, options: options }
+      def self.execute_on(fields, method, options = {})
+        @validations = [] unless @validations.is_a?(Array)
+        @validations << { execute: true, fields: fields, method: method, options: options }
       end
       
       def self.validations
@@ -140,10 +141,12 @@ module StatelyValidator
       
       private
       
-      def execute(opts)
-        return unless opts[:method]
-        return send(opts[:method].to_sym) if respond_to?(opts[:method].to_sym) 
-        return opts[:class].send(opts[:method].to_sym, self) if opts[:class].is_a?(Module) && opts[:class].respond_to?(opts[:method].to_sym)
+      def execute(method, opts)
+        return unless method
+        method = method.to_sym
+        
+        return send(method) if respond_to?(method) 
+        return opts[:class].send(method, self) if opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
       end
       
       def skip_validation?(opts)
