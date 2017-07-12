@@ -24,8 +24,8 @@ module StatelyValidator
       
       result = nil
       validations.each do |validation|
-        # Skip if the value is empty and we don't process on nil
-        next unless validation.on_nil || Utilities.to_array(values).any?{|v| not v.nil? || v.to_s.empty?}
+        # Skip if the value(s) is/are empty and we don't process on nil
+        next unless validation.on_nil || Utilities.to_array(values).all?{|v| not v.nil? || v.to_s.empty?}
         
         # Now we are going to skip if we have states, and we don't match them
         # TODO
