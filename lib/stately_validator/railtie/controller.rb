@@ -4,12 +4,24 @@ module StatelyValidator
       require "active_support/concern"
       extend ActiveSupport::Concern
       
+      # We may want to globally set the state for any validators loaded. 
+      # Things like "is_logged_in" or "is_admin"
+      def set_validator_state(state)
+        return unless state
+        state = state.to_sym
+        
+        @validator_states = [] unless @validator_states.is_a?(Array)
+        @validator_states << state unless @validator_states.include?(state)
+      end
+      
       def validate_with(name, options = {})
         # Find the validator
         validator = load_validator name
         return nil unless validator
         
         validator.set_action_controller self
+        (@validator_states || []).each {|s| validator.set_state s}
+        
         validator.validate(params) unless options[:dont_validate]
         validator
       end
