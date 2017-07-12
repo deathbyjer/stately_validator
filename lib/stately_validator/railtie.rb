@@ -5,9 +5,11 @@ module StatelyValidator
     initializer 'stately_validator.load_validator_from_controller' do
       ActiveSupport.on_load :action_controller do
         include Controller
-        
-        # Load everything in /validators, so that the keys can be properly loaded
-        Dir[(Rails.root + "app/validators/*.rb")].each {|f| require_dependency f.gsub(/\.rb$/, '') }
+      end
+      
+      # Load everything in /validators, so that the keys can be properly loaded
+      Dir[(Rails.root + "app/validators/*.rb")].each do |f| 
+        load f   
       end
     end
     
