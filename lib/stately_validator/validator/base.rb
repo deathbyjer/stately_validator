@@ -65,6 +65,10 @@ module StatelyValidator
         @errors || {}
       end
       
+      def states
+        @states || {}
+      end
+      
       def validate(params = nil)
         if params.is_a?(Hash)
           @ran = false
@@ -134,7 +138,7 @@ module StatelyValidator
         condition = condition.to_sym if condition.is_a?(String)
         
         # If the condition is just the existence of an error or an internal error, then just check for that
-        return @states[condition] || @notes[condition] || @internal[condition] || @errors[:condition] if condition.is_a?(Symbol)
+        return states[condition] || @notes[condition] || @internal[condition] || @errors[:condition] if condition.is_a?(Symbol)
         
         # If the condition is an array, then we need to evaluate it according to the opposite operator of this array
         return evaluate_skip_array(condition, operator == :and ? :or : :and) if condition.is_a?(Array)
@@ -151,7 +155,7 @@ module StatelyValidator
         
         # Now we need to evaluate the condition hash
         k,v = condition.first
-        [@errors, @internal, @states, @notes].each { |check| return true if check[k].eql?(v) }
+        [@errors, @internal, states, @notes].each { |check| return true if check[k].eql?(v) }
         
         # Otherwise, just return false
         false
