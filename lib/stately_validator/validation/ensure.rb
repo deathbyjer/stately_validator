@@ -22,6 +22,8 @@ module StatelyValidator
             cast(values) { |v| v.to_f }
           when :string
             cast(values) { |v| v.to_s }
+          when :symbol
+            cast(values) { |v| v.to_sym }
           else
             values
           end
