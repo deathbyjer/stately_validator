@@ -11,8 +11,9 @@ module StatelyValidator
       
       # Ensure we keep only one of each class of validator per key, at the original position but using the most current validator
       key = validation.key.to_sym
-      if @validations[key].include?(validation)
-        @validations[key][@validations[key].index(validation)] = validation
+      idx = @validations[key].index {|v| v.name.eql?(validation.name)}
+      if idx
+        @validations[key][idx] = validation
       else
         @validations[key] << validation
       end
