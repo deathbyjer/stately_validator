@@ -92,6 +92,11 @@ module StatelyValidator
         @values[name] = value
       end
       
+      def value(name)
+        return nil if name.nil?
+        @values[name.to_sym]
+      end
+      
       def validate(params = nil)
         if params.is_a?(Hash)
           @ran = false
