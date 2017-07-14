@@ -30,8 +30,27 @@ module StatelyValidator
         @validations << { execute: true, fields: fields, method: method, options: options }
       end
       
+      # This function will transform a field into something else
+      #
+      # The translated value will replace it in "params"
+      def self.transform(fields, method, options = {})
+        @validations = [] unless @validations.is_a?(Array)
+        @validations << { transform: true, fields: fields, method: method, options: options }
+      end
+      
+      # This function will indicate the fields to save, assuming they exist and passed all their tests
+      #
+      def self.store(fields, options = {})
+        @store = {} unless @store.is_a?(Hash)
+        Utilities.to_array(fields).each {|field| @store[field] = options }
+      end
+      
       def self.validations
         @validations || []
+      end
+      
+      def self.stores
+        @store || {}
       end
       
       def self.notes
@@ -122,7 +141,13 @@ module StatelyValidator
           
           # If we are executing, then just execute and go to the next step
           if details[:execute]
-            execute details[:method], opts
+            execute vals, details[:method], opts
+            next
+          end
+          
+          # Transform the relevant fields
+          if details[:transform]
+            Utilities.to_array(details[:fields]).each {|f| transform f, details[:method], opts}
             next
           end
           
@@ -150,6 +175,38 @@ module StatelyValidator
         @errors.empty?
       end
       
+      # Store the transformed / checked values into an object
+      def store_into(object, options = {})
+        return false unless valid? || options[:on_error]
+
+        @params.merge(values).each do |k,v|
+          #Skip any fields not in store if there are fields there
+          next unless stores.empty? || stores[k]
+          
+          # FIrst, if the user put in their own field, only store those
+          next unless !options[:fields].is_a?(Array) || options[:fields].include?(k)
+          
+          # Now, we are going to need to know if we are transforming this item for storage
+          store_opts = stores[k] || {}
+          
+          new_val = v
+          
+          # Now, we are going to try different ways to transform the object, if they have
+          # Been given by the validator
+          if store_opts[:method].is_a?(Symbol)
+            if self.respond_to?(store_opts[:method])
+              new_val = self.send(store_opts[:method], object, v)
+            elsif object.respond_to?(store_opts[:method])
+              new_val = object.send(store_opts[:method])
+            elsif store_opts[:class].is_a?(Module) && store_opts[:class].respond_to?(store_opts[:method])
+              new_val = store_opts[:class].send(store_opts[:method], object, v)
+            end
+          end
+          
+          object.send(options[:set] || "#{f}=".to_sym, new_val) unless self.errors[f]
+        end
+      end
+      
       protected
       
       def self.validations
@@ -158,12 +215,29 @@ module StatelyValidator
       
       private
       
-      def execute(method, opts)
+      def execute(values, method, opts)
         return unless method
         method = method.to_sym
         
-        return send(method) if respond_to?(method) 
-        return opts[:class].send(method, self) if opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
+        return send(methodm, values) if respond_to?(method) 
+        return opts[:class].send(method, values, self) if opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
+      end
+      
+      def transform(field, method, opts)
+        return unless method
+        method = method.to_sym
+        val = values[field] || @params[field]
+        return unless val.nil? || val.to_s.empty?
+        new_val = nil
+        new_val = send(method, val) if new_val.nil? && respond_to?(method) 
+        new_val = opts[:class].send(method, self, val) if new_val.nil? && opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
+        return unless new_val
+        
+        if values[field]
+          set_value field, values[field]
+        else
+          set_param(field, new_val) 
+        end
       end
       
       def skip_validation?(opts)
