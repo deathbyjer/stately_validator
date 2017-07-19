@@ -219,8 +219,8 @@ module StatelyValidator
         return unless method
         method = method.to_sym
         
-        return send(method, values) if respond_to?(method) 
-        return opts[:class].send(method, values, self) if opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
+        return send(method, *values) if respond_to?(method) 
+        return opts[:class].send(method, self, *values) if opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
       end
       
       def transform(field, method, opts)
