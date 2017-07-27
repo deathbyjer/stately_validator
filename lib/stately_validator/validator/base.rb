@@ -102,8 +102,8 @@ module StatelyValidator
         @states || {}
       end
       
-      def values
-        @values || {}
+      def values(pure = false)
+        (pure ? params : {}).merge(@values || {})
       end
       
       def set_value(name, value)
@@ -119,6 +119,8 @@ module StatelyValidator
       
       def value(name)
         return nil if name.nil?
+        val = params[name.to_s.to_sym]
+        return val unless val.nil? || val.to_s.empty?
         params[name.to_s.to_sym]
       end
       
@@ -138,7 +140,7 @@ module StatelyValidator
           next if (Utilities.to_array(details[:fields]) + (opts[:as] ? [opts[:as]] : [])).any?{|k| @errors[k]}
         
           # Gather the values to send in
-          vals = Utilities.to_array(details[:fields]).map{|f| value(f) || param(f)}
+          vals = Utilities.to_array(details[:fields]).map{|f| value(f)}
           vals = vals.first if vals.count == 1
           
           # Now we are going to skip based on internal errors, external errors and state
@@ -184,7 +186,7 @@ module StatelyValidator
       def store_into(object, options = {})
         return false unless valid? || options[:on_error]
 
-        @params.merge(values).each do |k,v|
+        @params.merge(values(true)).each do |k,v|
           #Skip any fields not in store if there are fields there
           next unless stores.empty? || stores[k]
           
@@ -232,8 +234,7 @@ module StatelyValidator
         return unless method
         method = method.to_sym
         
-        val = value(field) 
-        val = param(field) if val.nil? || val.to_s.empty?
+        value = value(field)
         return if val.nil? || val.to_s.empty?
         
         new_val = nil
@@ -241,11 +242,7 @@ module StatelyValidator
         new_val = opts[:class].send(method, self, val) if new_val.nil? && opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
         return unless new_val
         
-        if value(field)
-          set_value field, new_val
-        else
-          set_param field, new_val
-        end
+        set_value field, new_val
       end
       
       def skip_validation?(opts)
