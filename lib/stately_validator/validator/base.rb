@@ -72,7 +72,7 @@ module StatelyValidator
       end
       
       def set_param(name, value)
-        return unless name.is_a?(Symbol)
+        name = name.to_s.to_sym
         @params = {} unless @params.is_a?(Hash)
         @params[name] = value
       end
@@ -107,11 +107,19 @@ module StatelyValidator
       end
       
       def set_value(name, value)
+        name = name.to_s.to_sym
         @values = {} unless @values.is_a?(Hash)
         @values[name] = value
       end
       
+      def param(name)
+        name = name.to_s.to_sym
+        return nil if name.nil?
+        params[name.to_sym]
+      end
+      
       def value(name)
+        name = name.to_s.to_sym
         return nil if name.nil?
         values[name.to_sym]
       end
@@ -225,14 +233,14 @@ module StatelyValidator
       def transform(field, method, opts)
         return unless method
         method = method.to_sym
-        val = values[field] || params[field]
-        return unless val.nil? || val.to_s.empty?
+        val = value(field) || param(field)
+        return if val.nil? || val.to_s.empty?
         new_val = nil
         new_val = send(method, val) if new_val.nil? && respond_to?(method) 
         new_val = opts[:class].send(method, self, val) if new_val.nil? && opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
         return unless new_val
         
-        if value[field]
+        if value(field)
           set_value field, new_val
         else
           set_param field, new_val
