@@ -119,7 +119,7 @@ module StatelyValidator
       def validate(new_params = nil)
         if new_params.is_a?(Hash)
           @ran = false
-          @params = new_params
+          @params = {}; new_params.each{|k,v| @params[k.to_s.to_sym] = v}
         end
  
         @errors = {}
