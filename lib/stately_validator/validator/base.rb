@@ -113,7 +113,7 @@ module StatelyValidator
       
       def value(name)
         return nil if name.nil?
-        @values[name.to_sym]
+        values[name.to_sym]
       end
       
       def validate(params = nil)
@@ -133,7 +133,7 @@ module StatelyValidator
           next if (Utilities.to_array(details[:fields]) + (opts[:as] ? [opts[:as]] : [])).any?{|k| @errors[k]}
         
           # Gather the values to send in
-          vals = Utilities.to_array(details[:fields]).map{|f| values[f] || @params[f]}
+          vals = Utilities.to_array(details[:fields]).map{|f| values[f] || params[f]}
           vals = vals.first if vals.count == 1
           
           # Now we are going to skip based on internal errors, external errors and state
@@ -226,17 +226,17 @@ module StatelyValidator
       def transform(field, method, opts)
         return unless method
         method = method.to_sym
-        val = values[field] || @params[field]
+        val = values[field] || params[field]
         return unless val.nil? || val.to_s.empty?
         new_val = nil
         new_val = send(method, val) if new_val.nil? && respond_to?(method) 
         new_val = opts[:class].send(method, self, val) if new_val.nil? && opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
         return unless new_val
         
-        if values[field]
-          set_value field, values[field]
+        if value[field]
+          set_value field, new_val
         else
-          set_param(field, new_val) 
+          set_param field, new_val
         end
       end
       

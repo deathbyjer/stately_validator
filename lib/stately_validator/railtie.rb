@@ -11,7 +11,7 @@ module StatelyValidator
       end
       
       # Setup a dependency requirement on all the validations
-      Dir[(Rails.root + "app/validators/**/*_validator.rb")].each do |f| 
+      Dir[(Rails.root + "app/validators/**/*.rb")].each do |f| 
         require_dependency f   
       end
     end
