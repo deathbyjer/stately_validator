@@ -103,7 +103,7 @@ module StatelyValidator
       end
       
       def values(pure = false)
-        (pure ? params : {}).merge(@values || {})
+        (pure ? {} : params).merge(@values || {})
       end
       
       def set_value(name, value)
@@ -119,7 +119,7 @@ module StatelyValidator
       
       def value(name)
         return nil if name.nil?
-        val = params[name.to_s.to_sym]
+        val = values[name.to_s.to_sym]
         return val unless val.nil? || val.to_s.empty?
         params[name.to_s.to_sym]
       end
