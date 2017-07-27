@@ -234,7 +234,7 @@ module StatelyValidator
         return unless method
         method = method.to_sym
         
-        value = value(field)
+        val = value(field)
         return if val.nil? || val.to_s.empty?
         
         new_val = nil
