@@ -113,15 +113,13 @@ module StatelyValidator
       end
       
       def param(name)
-        name = name.to_s.to_sym
         return nil if name.nil?
-        params[name.to_sym]
+        params[name.to_s.to_sym]
       end
       
       def value(name)
-        name = name.to_s.to_sym
         return nil if name.nil?
-        values[name.to_sym]
+        params[name.to_s.to_sym]
       end
       
       def validate(new_params = nil)
@@ -132,7 +130,7 @@ module StatelyValidator
  
         @errors = {}
         @internal = {}
-        @notes = {}; self.class.notes.each {|n| @notes[n] = params[n] if params[n]}
+        @notes = {}; self.class.notes.each {|n| @notes[n] = param(n) if param(n)}
         
         self.class.validations.each do |details|
           # Are we skipping this because some of the items have failed their validations?
@@ -140,7 +138,7 @@ module StatelyValidator
           next if (Utilities.to_array(details[:fields]) + (opts[:as] ? [opts[:as]] : [])).any?{|k| @errors[k]}
         
           # Gather the values to send in
-          vals = Utilities.to_array(details[:fields]).map{|f| values[f] || params[f]}
+          vals = Utilities.to_array(details[:fields]).map{|f| value(f) || param(f)}
           vals = vals.first if vals.count == 1
           
           # Now we are going to skip based on internal errors, external errors and state
@@ -233,8 +231,11 @@ module StatelyValidator
       def transform(field, method, opts)
         return unless method
         method = method.to_sym
-        val = value(field) || param(field)
+        
+        val = value(field) 
+        val = param(field) if val.nil? || val.to_s.empty?
         return if val.nil? || val.to_s.empty?
+        
         new_val = nil
         new_val = send(method, val) if new_val.nil? && respond_to?(method) 
         new_val = opts[:class].send(method, self, val) if new_val.nil? && opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
