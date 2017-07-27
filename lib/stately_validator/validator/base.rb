@@ -65,9 +65,9 @@ module StatelyValidator
       def params=(params)
         @ran = false
         if params.is_a?(Hash)
-          @params = params 
+          @params = {}; params.each {|k,v| @params[k.to_s.to_sym] = v} 
         elsif params.respond_to?(:to_hash)
-          @params = params.to_hash
+          @params = {}; params.to_hash.each {|k,v| @params[k.to_s.to_sym] = v}
         end
       end
       
