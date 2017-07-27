@@ -116,16 +116,15 @@ module StatelyValidator
         values[name.to_sym]
       end
       
-      def validate(params = nil)
-        if params.is_a?(Hash)
+      def validate(new_params = nil)
+        if new_params.is_a?(Hash)
           @ran = false
-          @params = params 
+          @params = new_params
         end
-        return false unless @params.is_a?(Hash)
  
         @errors = {}
         @internal = {}
-        @notes = {}; self.class.notes.each {|n| @notes[n] = @params[n] if @params[n]}
+        @notes = {}; self.class.notes.each {|n| @notes[n] = params[n] if params[n]}
         
         self.class.validations.each do |details|
           # Are we skipping this because some of the items have failed their validations?
