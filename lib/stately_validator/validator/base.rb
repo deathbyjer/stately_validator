@@ -85,9 +85,13 @@ module StatelyValidator
         @states[name.to_sym] = value
       end
       
-      def state?(name)
+      def state
         return false unless @states.is_a?(Hash)
         @states[name.to_sym]
+      end
+      
+      def state?(name)
+        state(name) || false
       end
       
       def params
