@@ -332,9 +332,13 @@ module StatelyValidator
       
       def skip_validation?(opts)
         # We are going to evaluate the skip_if condition
-        lists = [states, notes, @internal, @errors]
+        lists = [states, notes]
         return true if opts[:skip_if] && evaluate_skip_array(opts[:skip_if], :and, lists)
         return true if opts[:skip_unless] && !evaluate_skip_array(opts[:skip_unless], :and, lists)
+        
+        lists = [@internal, @errors]
+        return true if opts[:skip_if_error] && evaluate_skip_array(opts[:skip_if_error], :and, lists)
+        return true if opts[:skip_unless_error] && !evaluate_skip_array(opts[:skip_unless_error], :and, lists)
         false
       end
       
