@@ -329,23 +329,28 @@ module StatelyValidator
       
       def skip_validation?(opts)
         # We are going to evaluate the skip_if condition
-        return evaluate_skip_array(opts[:skip_if], :and) if opts[:skip_if]
-        return !evaluate_skip_array(opts[:skip_unless], :and) if opts[:skip_unless]
+        lists = [states, @notes, values, params]
+        return evaluate_skip_array(opts[:skip_if], :and, lists) if opts[:skip_if]
+        return !evaluate_skip_array(opts[:skip_unless], :and, lists) if opts[:skip_unless]
+        
+        lists = [@internal, @errors]
+        return evaluate_skip_array(opts[:skip_if_error], :and, lists) if opts[:skip_if_error]
+        return !evaluate_skip_array(opts[:skip_unless_error], :and, lists) if opts[:skip_unless_error]
         false
       end
       
       # We are going to evaluate the skip array and see if all the values 
-      def evaluate_skip_array(conditions, operator = :and)
+      def evaluate_skip_array(conditions, operator = :and, lists = [])
         conditions = [ conditions ] unless conditions.is_a?(Array)
-        operator == :and ? conditions.all?{|c| evaluate_skip_condition(c, operator)} : conditions.any?{|c| evaluate_skip_condition(c, operator)}
+        operator == :and ? conditions.all?{|c| evaluate_skip_condition(c, operator, lists)} : conditions.any?{|c| evaluate_skip_condition(c, operator, lists)}
       end
       
-      def evaluate_skip_condition(condition, operator = :and)
+      def evaluate_skip_condition(condition, operator = :and, lists)
         # If the condition is a string, convert it to a symbol
         condition = condition.to_sym if condition.is_a?(String)
         
         # If the condition is just the existence of an error or an internal error, then just check for that
-        return states[condition] || @notes[condition] || @internal[condition] || @errors[:condition] if condition.is_a?(Symbol)
+        return lists.any?{|list| list[condition]} if condition.is_a?(Symbol)
         
         # If the condition is an array, then we need to evaluate it according to the opposite operator of this array
         return evaluate_skip_array(condition, operator == :and ? :or : :and) if condition.is_a?(Array)
@@ -362,7 +367,7 @@ module StatelyValidator
         
         # Now we need to evaluate the condition hash
         k,v = condition.first
-        [@errors, @internal, states, @notes].each { |check| return true if check[k].eql?(v) }
+        lists.each { |check| return true if check[k].eql?(v) }
         
         # Otherwise, just return false
         false
