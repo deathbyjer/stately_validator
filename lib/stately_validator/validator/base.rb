@@ -63,7 +63,11 @@ module StatelyValidator
       
       def self.note(field)
         @notes = [] unless @notes.is_a?(Array)
-        @notes << field
+        @notes << field.to_s.to_sym
+      end
+      
+      def notes
+        params.merge(values).select{|k,v| self.class.notes.include?(k)}
       end
       
       # PARAMS
@@ -172,7 +176,6 @@ module StatelyValidator
  
         @errors = {}
         @internal = {}
-        @notes = {}; self.class.notes.each {|n| @notes[n] = param(n) if param(n)}
         
         self.class.validations.each do |details|
           # Are we skipping this because some of the items have failed their validations?
@@ -329,7 +332,7 @@ module StatelyValidator
       
       def skip_validation?(opts)
         # We are going to evaluate the skip_if condition
-        lists = [states, @notes, values, params]
+        lists = [states, notes]
         return evaluate_skip_array(opts[:skip_if], :and, lists) if opts[:skip_if]
         return !evaluate_skip_array(opts[:skip_unless], :and, lists) if opts[:skip_unless]
         
