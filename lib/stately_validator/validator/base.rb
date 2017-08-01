@@ -221,7 +221,7 @@ module StatelyValidator
             end
           end
           
-          object.send(options[:set] || "#{f}=".to_sym, new_val) unless self.errors[k]
+          (options[:set] ? object.send(options[:set], k, new_val) : object.send("#{k}=".to_sym, new_val)) unless self.errors[k]
         end
       end
       
