@@ -196,6 +196,9 @@ module StatelyValidator
           # Now, we are going to need to know if we are transforming this item for storage
           store_opts = stores[k] || {}
           
+          # Now we are going to skip based on internal errors, external errors and state
+          next if skip_validation?(store_opts)
+          
           new_val = v
           
           # Now, we are going to try different ways to transform the object, if they have
