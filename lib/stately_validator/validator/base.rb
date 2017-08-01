@@ -66,6 +66,14 @@ module StatelyValidator
         @notes << field
       end
       
+      # PARAMS
+      #
+      # params are the initial state of the validator. They are what is first passed in
+      
+      def params
+        @params || {}
+      end
+      
       def params=(params)
         @ran = false
         if params.is_a?(Hash)
@@ -79,6 +87,64 @@ module StatelyValidator
         name = name.to_s.to_sym
         @params = {} unless @params.is_a?(Hash)
         @params[name] = value
+      end
+      
+      def param(name)
+        return nil if name.nil?
+        params[name.to_s.to_sym]
+      end
+      
+      # VALUES
+      # 
+      # Values are the current state of the validator. They are the parameters, but 
+      # may have been transformed or otherwise changed through the process of validator
+      # Values will be saved to the model in the end. 
+      #
+      # If there is no value set, then it will default to a parameter during a lookup
+      
+      def values(pure = false)
+        (pure ? {} : params).merge(@values || {})
+      end
+      
+      def set_value(name, value)
+        name = name.to_s.to_sym
+        @values = {} unless @values.is_a?(Hash)
+        @values[name] = value
+      end
+      
+      def value(name)
+        return nil if name.nil?
+        val = values[name.to_s.to_sym]
+        return val unless val.nil? || val.to_s.empty?
+        params[name.to_s.to_sym]
+      end
+      
+      # ERRORS
+      #
+      # These are the validation errors
+      
+      def errors
+        @errors || {}
+      end
+      
+      def set_error(n, v)
+        @errors = {} unless @errors.is_a?(Hash)
+        @errors[n.to_s.to_sym] = v
+      end
+      
+      def error(n)
+        errors[n.to_s.to_sym]
+      end
+      
+      # STATES
+      #
+      # These are special variables that are set before the validation is run, or over the course
+      # of the validation that indicate certain states of the validator. They can be checked for,
+      # used in transformations, validations and otherwise but will not be saved to the model
+      # at the end.
+      
+      def states
+        @states || {}
       end
       
       # This is how we can set some internal variables, which are useful for 
@@ -96,40 +162,6 @@ module StatelyValidator
       
       def state?(name)
         state(name) || false
-      end
-      
-      def params
-        @params || {}
-      end
-      
-      def errors
-        @errors || {}
-      end
-      
-      def states
-        @states || {}
-      end
-      
-      def values(pure = false)
-        (pure ? {} : params).merge(@values || {})
-      end
-      
-      def set_value(name, value)
-        name = name.to_s.to_sym
-        @values = {} unless @values.is_a?(Hash)
-        @values[name] = value
-      end
-      
-      def param(name)
-        return nil if name.nil?
-        params[name.to_s.to_sym]
-      end
-      
-      def value(name)
-        return nil if name.nil?
-        val = values[name.to_s.to_sym]
-        return val unless val.nil? || val.to_s.empty?
-        params[name.to_s.to_sym]
       end
       
       def validate(new_params = nil)
@@ -164,6 +196,11 @@ module StatelyValidator
           if details[:transform]
             Utilities.to_array(details[:fields]).each {|f| transform f, details[:method], opts}
             next
+          end
+          
+          if details[:validation] == :validator
+           validate_with_validator(opts[:validator], details[:fields])
+           next
           end
           
           # Attempt the validation
@@ -232,6 +269,40 @@ module StatelyValidator
       end
       
       private
+      
+      # Validating with a validator is part of the power of these systems
+      # It will run the sub-validator, copy the associated fields into the validator and then
+      # run the validator and copy the output back into the parent validator
+      def validate_with_validator(validator, fields)
+        validator = Validator.validator_for(validator) if validator.is_a?(Symbol)
+        return unless validator.is_a?(Validator)
+        validator = validator.new
+        
+        # Set up the fields. If fields is nil, then we will check ALL fields
+        fields = fields.nil? ? :all : Utilities.to_array(fields)
+        
+        # Gather the items we will copy in and then out
+        iterate_on = {value: values, param: params, error: errors, state: states}
+        
+        # Copy in
+        iterate_on.each do |name, hash|
+          hash.each do |k,v| 
+            next unless fields == :all || fields.include?(k)
+            validator.send("set_#{name}", k, v)
+          end
+        end
+        
+        validator.validate # Perform the validations
+        
+        # Copy out
+        iterate_on.keys.each do |name|
+          hash = validator.send("#{name}s".to_sym)
+          hash.each do |k,v| 
+            next unless fields == :all || fields.include?(k)
+            self.send("set_#{name}", k, v)
+          end
+        end
+      end
       
       def execute(values, method, opts)
         return unless method
