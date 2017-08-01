@@ -53,6 +53,10 @@ module StatelyValidator
         @store || {}
       end
       
+      def stores
+        self.class.stores
+      end
+      
       def self.notes
         @notes || []
       end
