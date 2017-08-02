@@ -253,11 +253,25 @@ module StatelyValidator
           # Been given by the validator
           if store_opts[:method].is_a?(Symbol)
             if self.respond_to?(store_opts[:method])
-              new_val = self.send(store_opts[:method], object, v, k)
+              new_val = case self.methods(store_opts[:method]).arity
+              when 1
+                self.send(store_opts[:method], v)
+              when 2
+                self.send(store_opts[:method], object, v)
+              else
+                self.send(store_opts[:method], object, v, k)
+              end
             elsif object.respond_to?(store_opts[:method])
               new_val = object.send(store_opts[:method])
             elsif store_opts[:class].is_a?(Module) && store_opts[:class].respond_to?(store_opts[:method])
-              new_val = store_opts[:class].send(store_opts[:method], object, v, k)
+              new_val = case store_opts[:class].methods(store_opts[:method]).arity
+              when 1
+                store_opts[:class].send(store_opts[:method], v)
+              when 2
+                store_opts[:class].send(store_opts[:method], object, v)
+              else
+                store_opts[:class].send(store_opts[:method], object, v, k)
+              end
             end
           end
           
