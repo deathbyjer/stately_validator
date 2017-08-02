@@ -324,6 +324,7 @@ module StatelyValidator
         
         new_val = nil
         new_val = send(method, val) if new_val.nil? && respond_to?(method) 
+        new_val = val.send(method) if new_val.nil? && val.respond_to?(method)
         new_val = opts[:class].send(method, self, val) if new_val.nil? && opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
         return unless new_val
         
