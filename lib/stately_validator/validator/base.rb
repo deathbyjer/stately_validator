@@ -265,7 +265,7 @@ module StatelyValidator
                 self.send(store_opts[:method], object, v, k)
               end
             elsif object.respond_to?(store_opts[:method])
-              new_val = object.send(store_opts[:method])
+              new_val = object.send(store_opts[:method], v)
             elsif store_opts[:class].is_a?(Module) && store_opts[:class].respond_to?(store_opts[:method])
               new_val = case store_opts[:class].method(store_opts[:method]).arity
               when 1
