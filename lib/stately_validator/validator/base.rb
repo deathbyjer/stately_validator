@@ -180,7 +180,10 @@ module StatelyValidator
         self.class.validations.each do |details|
           # Are we skipping this because some of the items have failed their validations?
           opts = details[:options]
+          
+          next unless Utilities.to_array(details[:fields]).all?{|k| value?(k)} # All the required fields are not here
           next if (Utilities.to_array(details[:fields]) + (opts[:as] ? [opts[:as]] : [])).any?{|k| @errors[k]}
+          
         
           # Gather the values to send in
           vals = Utilities.to_array(details[:fields]).map{|f| value(f)}
