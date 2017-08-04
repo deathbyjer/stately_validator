@@ -22,7 +22,9 @@ module StatelyValidator
         validator.set_action_controller self
         (@validator_states || {}).each {|n,v| validator.set_state n, v}
         
-        validator.params = params
+        p = {}; params.send(params.respond_to?(:to_unsafe_h) ? :to_unsafe_h : :to_h).each {|k,v| p[k.to_s.to_sym] = v}
+        
+        validator.params = p
         validator.validate unless options[:dont_validate]
         validator
       end
