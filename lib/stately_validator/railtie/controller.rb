@@ -22,7 +22,8 @@ module StatelyValidator
         validator.set_action_controller self
         (@validator_states || {}).each {|n,v| validator.set_state n, v}
         
-        validator.validate(params) unless options[:dont_validate]
+        validator.params = params
+        validator.validate unless options[:dont_validate]
         validator
       end
       

@@ -43,8 +43,9 @@ module StatelyValidator
         
         method = options[:method]
         expects = options.key?(:expects) ? options[:expects] : true
-        return "error" unless compare_with_expectation(expects, Utilities.to_array(values).all?{|item| item.respond_to?(method) && item.send(method, *Utilities.to_array(options[:args]))})
-        
+        return "error" unless compare_with_expectation(expects, Utilities.to_array(values).all? do |item| 
+          item.respond_to?(method) && (item.method(method).arity > 0 ? item.send(method, *Utilities.to_array(options[:args])) : item.send(method))
+        end)
         true
       end
     end

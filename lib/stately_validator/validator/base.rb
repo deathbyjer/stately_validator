@@ -17,7 +17,8 @@ module StatelyValidator
         @validations = [] unless @validations.is_a?(Array)
         
         # We just need to log the validations, in order, for when we actually call the validation
-        @validations << { fields: fields, validation: validation, options: options }
+        item = { fields: fields, validation: validation, options: options }
+        @validations << item unless @validations.include?(item) # No Duplicates
       end
       
       # Sometimes, we may want to execute an action during the flow of validations.
@@ -82,8 +83,10 @@ module StatelyValidator
         @ran = false
         if params.is_a?(Hash)
           @params = {}; params.each {|k,v| @params[k.to_s.to_sym] = v} 
-        elsif params.respond_to?(:to_hash)
-          @params = {}; params.to_hash.each {|k,v| @params[k.to_s.to_sym] = v}
+        elsif params.respond_to?(:to_unsafe_h)
+          @params = {}; params.to_unsafe_h.each {|k,v| @params[k.to_s.to_sym] = v}
+        elsif params.respond_to?(:to_h)
+          @params = {}; params.to_h.each {|k,v| @params[k.to_s.to_sym] = v}
         end
       end
       
@@ -181,28 +184,15 @@ module StatelyValidator
           # Are we skipping this because some of the items have failed their validations?
           opts = details[:options]
           
-          next unless Utilities.to_array(details[:fields]).all?{|k| value(k)} # All the required fields are not here
           next if (Utilities.to_array(details[:fields]) + (opts[:as] ? [opts[:as]] : [])).any?{|k| @errors[k]}
           
-        
           # Gather the values to send in
           vals = Utilities.to_array(details[:fields]).map{|f| value(f)}
           vals = vals.first if vals.count == 1
           
           # Now we are going to skip based on internal errors, external errors and state
           next if skip_validation?(opts)
-          
-          # If we are executing, then just execute and go to the next step
-          if details[:execute]
-            execute vals, details[:method], opts
-            next
-          end
-          
-          # Transform the relevant fields
-          if details[:transform]
-            Utilities.to_array(details[:fields]).each {|f| transform f, details[:method], opts}
-            next
-          end
+          next if execute_or_transform(vals, details, opts)
           
           if details[:validation] == :validator
            validate_with_validator(opts[:validator], details[:fields])
@@ -289,6 +279,25 @@ module StatelyValidator
       end
       
       private
+      
+      def execute_or_transform(vals, details, opts)   
+        return false unless [:execute, :transform].any?{|k| details[k]}
+        return true unless Utilities.to_array(details[:fields]).all?{|k| value(k)} # All the required fields are not here
+                  
+        # If we are executing, then just execute and go to the next step
+        if details[:execute]
+          execute vals, details[:method], opts
+          return true
+        end
+        
+        # Transform the relevant fields
+        if details[:transform]
+          Utilities.to_array(details[:fields]).each {|f| transform f, details[:method], opts}
+          return true
+        end
+        
+        false
+      end
       
       # Validating with a validator is part of the power of these systems
       # It will run the sub-validator, copy the associated fields into the validator and then
