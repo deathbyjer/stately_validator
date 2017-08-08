@@ -68,7 +68,7 @@ module StatelyValidator
       end
       
       def notes
-        params.merge(values).select{|k,v| self.class.notes.include?(k)}
+        params.merge(values).select{|k,v| !v.nil? && !(v.respond_to?(:to_s) && v.to_s.empty?) && self.class.notes.include?(k)}
       end
       
       # PARAMS
