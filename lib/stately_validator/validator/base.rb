@@ -381,7 +381,7 @@ module StatelyValidator
         return lists.any?{|list| list[condition]} if condition.is_a?(Symbol)
         
         # If the condition is an array, then we need to evaluate it according to the opposite operator of this array
-        return evaluate_skip_array(condition, operator == :and ? :or : :and) if condition.is_a?(Array)
+        return evaluate_skip_array(condition, operator == :and ? :or : :and, lists) if condition.is_a?(Array)
         
         # The only thing left to evaluate is a hash. So if it's not a hash, return that this is fine 
         return true unless condition.is_a?(Hash)
