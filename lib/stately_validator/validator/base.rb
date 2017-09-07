@@ -266,7 +266,18 @@ module StatelyValidator
             end
           end
           
-          (options[:set] ? object.send(options[:set], k, new_val) : object.send("#{k}=".to_sym, new_val)) unless self.errors[k]
+          return if self.errors[k]
+          
+          if options[:set] && object.respond_to?(options[:set])
+            case object.method(options[:set]).arity
+            when 1
+              object.send(options[:set], new_val)
+            when 2
+              object.send(options[:set], k, new_val)
+            end
+          else
+            object.send("#{k}=".to_sym, new_val)
+          end
         end
       end
       
