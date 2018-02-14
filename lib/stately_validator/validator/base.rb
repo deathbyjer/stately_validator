@@ -16,6 +16,8 @@ module StatelyValidator
       def self.validate(fields, validation, options = {})
         @validations = [] unless @validations.is_a?(Array)
         
+        options = prepare_skip_blocks options
+        
         # We just need to log the validations, in order, for when we actually call the validation
         item = { fields: fields, validation: validation, options: options }
         @validations << item unless @validations.include?(item) # No Duplicates
@@ -28,6 +30,9 @@ module StatelyValidator
       # in order to proceed with the execution
       def self.execute_on(fields, method, options = {})
         @validations = [] unless @validations.is_a?(Array)
+        
+        options = prepare_skip_blocks options
+        
         @validations << { execute: true, fields: fields, method: method, options: options }
       end
       
@@ -36,6 +41,9 @@ module StatelyValidator
       # The translated value will replace it in "params"
       def self.transform(fields, method, options = {})
         @validations = [] unless @validations.is_a?(Array)
+        
+        options = prepare_skip_blocks options
+        
         @validations << { transform: true, fields: fields, method: method, options: options }
       end
       
@@ -43,7 +51,26 @@ module StatelyValidator
       #
       def self.store(fields, options = {})
         @store = {} unless @store.is_a?(Hash)
+        
+        options = prepare_skip_blocks options
+        
         Utilities.to_array(fields).each {|field| @store[field] = options }
+      end
+      
+      def self.skip_if(conditions, &block)
+        conditions = conditions.is_a?(Array) ? conditions : [ conditions ]
+        @skip_iffing = (@skip_iffing || []) + conditions
+        block.call
+        @skip_iffing = @skip_iffing - conditions
+        @skip_iffing = nil if @skip_iffing.empty?
+      end
+      
+      def self.skip_unless(conditions, &block)
+        conditions = conditions.is_a?(Array) ? conditions : [ conditions ]
+        @skip_unlessing = (@skip_unlessing || []) + conditions
+        block.call
+        @skip_unlessing = @skip_unlessing - conditions
+        @skip_unlessing = nil if @skip_unlessing.empty?
       end
       
       def self.validations
@@ -288,6 +315,20 @@ module StatelyValidator
       end
       
       private
+      
+      def self.prepare_skip_blocks(conditions)
+        {skip_if: @skip_if, skip_unless: @skip_unlessing}.each do |k, gl|
+          next unless gl
+          
+          if conditions[k]
+            conditions[k] = gl + (conditions[k].is_a?(Array) ? conditions[k] : [ conditions[k] ])
+          else
+            conditions[k] = gl.dip
+          end
+        end
+        
+        conditions
+      end
       
       def execute_or_transform(vals, details, opts)   
         return false unless [:execute, :transform].any?{|k| details[k]}
