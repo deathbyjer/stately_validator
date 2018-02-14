@@ -411,8 +411,8 @@ module StatelyValidator
       def skip_validation?(opts)
         # We are going to evaluate the skip_if condition
         lists = [states, notes]
-        return true if opts[:skip_if] && evaluate_skip_array(opts[:skip_if], :and, lists)
-        return true if opts[:skip_unless] && !evaluate_skip_array(opts[:skip_unless], :and, lists)
+        return true if opts[:skip_if] && evaluate_skip_array(opts[:skip_if], :and, lists, [values])
+        return true if opts[:skip_unless] && !evaluate_skip_array(opts[:skip_unless], :and, lists, [values])
         
         lists = [@internal, @errors]
         return true if opts[:skip_if_error] && evaluate_skip_array(opts[:skip_if_error], :and, lists)
@@ -426,7 +426,7 @@ module StatelyValidator
         operator == :and ? conditions.all?{|c| evaluate_skip_condition(c, operator, lists)} : conditions.any?{|c| evaluate_skip_condition(c, operator, lists)}
       end
       
-      def evaluate_skip_condition(condition, operator = :and, lists)
+      def evaluate_skip_condition(condition, operator = :and, lists, evaluate_lists = [])
         # If the condition is a string, convert it to a symbol
         condition = condition.to_sym if condition.is_a?(String)
         
@@ -448,7 +448,7 @@ module StatelyValidator
         
         # Now we need to evaluate the condition hash
         k,v = condition.first
-        lists.each { |check| return true if check[k].eql?(v) }
+        (lists + evaluate_lists).each { |check| return true if check[k].eql?(v) }
         
         # Otherwise, just return false
         false
