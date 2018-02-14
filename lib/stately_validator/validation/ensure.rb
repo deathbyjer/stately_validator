@@ -16,7 +16,7 @@ module StatelyValidator
           when :integer
             return "invalid" unless value.to_s =~ /^-?[0-9]+$/
           when :number
-            return "invalid" unless value.to_s =~ /^-?[0-9]+(.[0-9]*)?$/
+            return "invalid" unless value.to_s =~ /^-?[0-9]+(\.[0-9]*)?$/
           end
         end
         
