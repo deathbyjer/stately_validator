@@ -401,7 +401,7 @@ module StatelyValidator
         
         new_val = nil
         if new_val.nil? && opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
-          case opts[:class].method(opts[:method]).arity
+          case opts[:class].method(method).arity
           when 0
             new_val = opts[:class].send(method)
           when 1
