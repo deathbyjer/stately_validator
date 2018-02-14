@@ -400,7 +400,16 @@ module StatelyValidator
         return if val.nil? || val.to_s.empty?
         
         new_val = nil
-        new_val = opts[:class].send(method, self, val) if new_val.nil? && opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
+        if new_val.nil? && opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
+          case opts[:class].method(opts[:method]).arity
+          when 0
+            new_val = opts[:class].send(method)
+          when 1
+            new_val = opts[:class].send(method, val)
+          else
+            new_val = opts[:class].send(method, self, val) 
+          end
+        end
         new_val = send(method, val) if new_val.nil? && respond_to?(method) 
         new_val = val.send(method) if new_val.nil? && val.respond_to?(method)
         return unless new_val

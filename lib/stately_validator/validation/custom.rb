@@ -37,7 +37,7 @@ module StatelyValidator
           # And finally, if sending a Proc
           return "error" if options[:proc].is_a?(Proc) && !compare_with_expectation(expects, options[:proc].call(*Utilities.to_array(values)))
         rescue
-          return "error" unless expects == :error
+          return "error" unless expects.eql?(:error)
         end
         
         true
