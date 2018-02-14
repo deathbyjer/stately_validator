@@ -421,12 +421,12 @@ module StatelyValidator
       end
       
       # We are going to evaluate the skip array and see if all the values 
-      def evaluate_skip_array(conditions, operator = :and, lists = [])
+      def evaluate_skip_array(conditions, operator = :and, lists = [], evaluate_lists = [])
         conditions = [ conditions ] unless conditions.is_a?(Array)
-        operator == :and ? conditions.all?{|c| evaluate_skip_condition(c, operator, lists)} : conditions.any?{|c| evaluate_skip_condition(c, operator, lists)}
+        operator == :and ? conditions.all?{|c| evaluate_skip_condition(c, operator, lists, evaluate_lists)} : conditions.any?{|c| evaluate_skip_condition(c, operator, lists, evaluate_lists)}
       end
       
-      def evaluate_skip_condition(condition, operator = :and, lists, evaluate_lists = [])
+      def evaluate_skip_condition(condition, operator = :and, lists = [], evaluate_lists = [])
         # If the condition is a string, convert it to a symbol
         condition = condition.to_sym if condition.is_a?(String)
         
@@ -434,7 +434,7 @@ module StatelyValidator
         return lists.any?{|list| list[condition]} if condition.is_a?(Symbol)
         
         # If the condition is an array, then we need to evaluate it according to the opposite operator of this array
-        return evaluate_skip_array(condition, operator == :and ? :or : :and, lists) if condition.is_a?(Array)
+        return evaluate_skip_array(condition, operator == :and ? :or : :and, lists, evaluate_lists) if condition.is_a?(Array)
         
         # The only thing left to evaluate is a hash. So if it's not a hash, return that this is fine 
         return true unless condition.is_a?(Hash)
@@ -444,7 +444,7 @@ module StatelyValidator
         return true if condition.empty?
         
         # If the condition has more than one item, turn it into an array of one-item conditions
-        return evaluate_skip_array(condition.keys.map{|k| {k => condition[k]}}, operator == :and ? :or : :and) if condition.count > 1
+        return evaluate_skip_array(condition.keys.map{|k| {k => condition[k]}}, operator == :and ? :or : :and, lists, evaluate_lists) if condition.count > 1
         
         # Now we need to evaluate the condition hash
         k,v = condition.first
