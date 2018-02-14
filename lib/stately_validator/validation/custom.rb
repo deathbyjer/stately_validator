@@ -21,7 +21,7 @@ module StatelyValidator
         
         begin
           # If sending in a class and method
-          return "error" if options[:class].is_a?(Module) && options[:method].is_a?(Symbol) && options[:class].respond_to?(options[:method]) && !compare_with_expectation(expects, options[:class].send(options[:method], *Utilities.to_array(values)))
+          return "error" if options[:class].is_a?(Module) && options[:method].is_a?(Symbol) && options[:class].respond_to?(options[:method]) && !Utilities.to_array(values).all?{|value| compare_with_expectation(expects, options[:class].send(options[:method], value))}
           
           # If sending a method that can be run on the attached validator
           return "error" if options[:validator].is_a?(Validator::Base) && options[:method].is_a?(Symbol) && options[:validator].respond_to?(options[:method]) && !compare_with_expectation(expects, options[:validator].send(options[:method], *Utilities.to_array(values)))
