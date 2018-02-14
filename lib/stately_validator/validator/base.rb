@@ -406,10 +406,15 @@ module StatelyValidator
             new_val = opts[:class].send(method)
           when 1
             new_val = opts[:class].send(method, val)
+          # If only one item is required, then it's likely this function is NOT using the validator as
+          # an argument. So we'll assume that it really just wants the val
+          when -1
+            new_val = opts[:class].send(method, val)
           else
             new_val = opts[:class].send(method, self, val) 
           end
         end
+        
         new_val = send(method, val) if new_val.nil? && respond_to?(method) 
         new_val = val.send(method) if new_val.nil? && val.respond_to?(method)
         return unless new_val
