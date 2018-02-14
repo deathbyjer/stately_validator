@@ -14,6 +14,14 @@ module StatelyValidator
         @validator_states[name] = value
       end
       
+      def preset_validator_value(name, value)
+        return unless name
+        name = name.to_sym
+        
+        @validator_values = {} unless @validator_values.is_a?(Hash)
+        @validator_values[name] = value
+      end
+      
       def validate_with(name, options = {})
         # Find the validator
         validator = load_validator name
@@ -25,6 +33,7 @@ module StatelyValidator
         p = {}; params.send(params.respond_to?(:to_unsafe_h) ? :to_unsafe_h : :to_h).each {|k,v| p[k.to_s.to_sym] = v}
         
         validator.params = p
+        (@validator_values || {}).each {|n,v| validator.set_value n, v}
         validator.validate unless options[:dont_validate]
         validator
       end
