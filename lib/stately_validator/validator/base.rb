@@ -323,7 +323,7 @@ module StatelyValidator
           if conditions[k]
             conditions[k] = gl + (conditions[k].is_a?(Array) ? conditions[k] : [ conditions[k] ])
           else
-            conditions[k] = gl.dip
+            conditions[k] = gl.clone
           end
         end
         
