@@ -1,6 +1,29 @@
 module StatelyValidator
   class Validation
   
+    class TypeCheck < Base
+      key :check_types
+      
+      def self.validate(values, name = [], options = [])
+        name = name.first if name.is_a?(Array)
+        return unless name.is_a?(Symbol)
+      
+        values = [values] unless values.is_a?(Array)
+        values.each do |value|
+          case options[:is_a]
+          when :string
+            return "invalid" if value.nil?
+          when :integer
+            return "invalid" unless value.to_s =~ /^-?[0-9]+$/
+          when :number
+            return "invalid" unless value.to_s =~ /^-?[0-9]+(.[0-9]*)?$/
+          end
+        end
+        
+        true
+      end
+    end
+  
     class Ensure < Base
       key :ensure
       
