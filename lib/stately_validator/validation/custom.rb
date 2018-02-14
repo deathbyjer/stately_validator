@@ -4,6 +4,10 @@ module StatelyValidator
     # This just will add an expectation concept into a Validation
     module Expectations
       def compare_with_expectation(expects, value)
+        if expects.is_a?(Hash)
+          return value.is_a?(expects[:is_a]) if expects.key?(:is_a)
+        end
+        
         return value.to_s =~ expects if expects.is_a?(Regexp)
         value.eql?(expects)
       end
@@ -21,7 +25,11 @@ module StatelyValidator
         
         begin
           # If sending in a class and method
-          return "error" if options[:class].is_a?(Module) && options[:method].is_a?(Symbol) && options[:class].respond_to?(options[:method]) && !Utilities.to_array(values).all?{|value| compare_with_expectation(expects, options[:class].send(options[:method], value))}
+          if options[:class].is_a?(Module) && options[:method].is_a?(Symbol) && options[:class].respond_to?(options[:method])
+            Utilities.to_array(values).each do |value|
+              return "error" unless compare_with_expectation(expects, options[:class].send(options[:method], value))
+            end
+          end
           
           # If sending a method that can be run on the attached validator
           return "error" if options[:validator].is_a?(Validator::Base) && options[:method].is_a?(Symbol) && options[:validator].respond_to?(options[:method]) && !compare_with_expectation(expects, options[:validator].send(options[:method], *Utilities.to_array(values)))
