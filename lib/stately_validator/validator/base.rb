@@ -33,7 +33,8 @@ module StatelyValidator
         
         options = prepare_skip_blocks options
         
-        @validations << { execute: true, fields: fields, method: method, options: options }
+        item = { execute: true, fields: fields, method: method, options: options }
+        @validations << item unless @validations.include?(item) # #no Duplicates
       end
       
       # This function will transform a field into something else
@@ -43,8 +44,9 @@ module StatelyValidator
         @validations = [] unless @validations.is_a?(Array)
         
         options = prepare_skip_blocks options
-        
-        @validations << { transform: true, fields: fields, method: method, options: options }
+       
+        item = { transform: true, fields: fields, method: method, options: options }
+        @validations << item unless @validations.include?(item)
       end
       
       # This function will indicate the fields to save, assuming they exist and passed all their tests
@@ -401,17 +403,17 @@ module StatelyValidator
         
         new_val = nil
         if new_val.nil? && opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
-          case opts[:class].method(method).arity
+          new_val = case opts[:class].method(method).arity
           when 0
-            new_val = opts[:class].send(method)
+            opts[:class].send(method)
           when 1
-            new_val = opts[:class].send(method, val)
+            opts[:class].send(method, val)
           # If only one item is required, then it's likely this function is NOT using the validator as
           # an argument. So we'll assume that it really just wants the val
           when -1
-            new_val = opts[:class].send(method, val)
+            opts[:class].send(method, val)
           else
-            new_val = opts[:class].send(method, self, val) 
+            opts[:class].send(method, self, val) 
           end
         end
         
