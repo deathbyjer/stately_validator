@@ -317,7 +317,8 @@ module StatelyValidator
       private
       
       def self.prepare_skip_blocks(conditions)
-        {skip_if: @skip_if, skip_unless: @skip_unlessing}.each do |k, gl|
+        conditions = {} unless conditions.is_a?(Hash)
+        {skip_if: @skip_iffing, skip_unless: @skip_unlessing}.each do |k, gl|
           next unless gl
           
           if conditions[k]
