@@ -11,9 +11,32 @@ module StatelyValidator
         @name
       end
       
+      # We can assign a specific validator to operate on a certain parameter (item or array)
+      def self.validator_for(field, validator, options = {})
+        @validations = [] unless @validations.is_a?(Array)
+        
+        # Also, take note of this validator
+        # We are going to use it to store, if we want to store
+        @validator_for = {} unless @validator_for.is_a?(Hash)
+        @validator_for[field] = validator
+        
+        options = prepare_skip_blocks options
+        item = { validator_for: field, options: options }
+        @validations << item unless @validations.include?(item)
+      end
+      
+      def self.validator(validator, options = {})
+        @validations = [] unless @validations.is_a?(Array)
+        options = prepare_skip_blocks options
+        item = { validator: validator, options: options }
+        @validations << item unless @validations.include?(item)
+      end
+      
       # This is the main method for setting up our validations.
       # The order in which the methods are called are important.
       def self.validate(fields, validation, options = {})
+        return validator(options[:validator], options) if fields.nil? && validation == :validator
+        
         @validations = [] unless @validations.is_a?(Array)
         
         options = prepare_skip_blocks options
@@ -221,9 +244,16 @@ module StatelyValidator
           next if skip_validation?(opts)
           next if execute_or_transform(vals, details, opts)
           
-          if details[:validation] == :validator
-           validate_with_validator(opts[:validator], details[:fields])
+          # Perform a sub validation
+          if details[:validator]
+           validate_with_validator(validator, details[:fields])
            next
+          end
+          
+          # Use a validator on a particular field
+          if details[:validator_for]
+            validator_for_field details[:validator_for]
+            next
           end
           
           # Attempt the validation
@@ -357,11 +387,7 @@ module StatelyValidator
       # run the validator and copy the output back into the parent validator
       def validate_with_validator(validator, fields)
         validator = Validator.validator_for(validator) if validator.is_a?(Symbol)
-        return unless validator.is_a?(Validator)
-        validator = validator.new
-        
-        # Set up the fields. If fields is nil, then we will check ALL fields
-        fields = fields.nil? ? :all : Utilities.to_array(fields)
+        return unless validator.is_a?(Base)
         
         # Gather the items we will copy in and then out
         iterate_on = {value: values, param: params, error: errors, state: states}
@@ -384,6 +410,31 @@ module StatelyValidator
             self.send("set_#{name}", k, v)
           end
         end
+      end
+      
+      # Validate this field with the subvalidator
+      def validator_for_field(field)
+        validator = @validator_for[field]
+        validator = Validator.validator_for(validator) if validator.is_a?(Symbol)
+        return unless validator.is_a?(Base)
+        
+        err = []
+        i = -1
+        Utilities.to_array(value(field)).each do |val|
+          i += 1
+          unless val.is_a?(Hash)
+            err[i] = "incorrect"
+            next
+          end
+          
+          subvalidator = stately_generate(validator)
+          subvalidator.params = val
+          subvalidator.validate
+          err[i] = subvalidator.errors unless subvalidator.valid?          
+        end
+        
+        err = err[0] unless value(field).is_a?(Array)
+        set_error field, err unless err.nil? || (err.is_a?(Array) && err.empty?)
       end
       
       def execute(values, method, opts)
@@ -468,6 +519,12 @@ module StatelyValidator
         
         # Otherwise, just return false
         false
+      end
+      
+      
+      def stately_generate(validator)
+        v = validator.new
+        states.each {|n,v| v.set_state n, v}
       end
     end
     
