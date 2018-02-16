@@ -1,7 +1,14 @@
+%w(children transform storage).each do |f|
+  require "stately_validator/validator/base/#{f}"
+end
+
 module StatelyValidator
   class Validator
     class Base
-     
+      include Children
+      include Transform
+      include Storage
+      
       def self.key(name_str = nil)
         unless name_str.nil? || @name == name_str
           @name = name_str.to_sym
@@ -9,20 +16,6 @@ module StatelyValidator
         end
         
         @name
-      end
-      
-      # We can assign a specific validator to operate on a certain parameter (item or array)
-      def self.validator_for(field, validator, options = {})
-        @validations = [] unless @validations.is_a?(Array)
-        
-        # Also, take note of this validator
-        # We are going to use it to store, if we want to store
-        @validator_for = {} unless @validator_for.is_a?(Hash)
-        @validator_for[field] = validator
-        
-        options = prepare_skip_blocks options
-        item = { validator_for: field, options: options }
-        @validations << item unless @validations.include?(item)
       end
       
       def self.validator(validator, options = {})
@@ -46,42 +39,6 @@ module StatelyValidator
         @validations << item unless @validations.include?(item) # No Duplicates
       end
       
-      # Sometimes, we may want to execute an action during the flow of validations.
-      # This would be used to generate an item needed to subsequent validations
-      #
-      # The fields argument, in this case, would be all the fields that need to be free-and-clear of errors#
-      # in order to proceed with the execution
-      def self.execute_on(fields, method, options = {})
-        @validations = [] unless @validations.is_a?(Array)
-        
-        options = prepare_skip_blocks options
-        
-        item = { execute: true, fields: fields, method: method, options: options }
-        @validations << item unless @validations.include?(item) # #no Duplicates
-      end
-      
-      # This function will transform a field into something else
-      #
-      # The translated value will replace it in "params"
-      def self.transform(fields, method, options = {})
-        @validations = [] unless @validations.is_a?(Array)
-        
-        options = prepare_skip_blocks options
-       
-        item = { transform: true, fields: fields, method: method, options: options }
-        @validations << item unless @validations.include?(item)
-      end
-      
-      # This function will indicate the fields to save, assuming they exist and passed all their tests
-      #
-      def self.store(fields, options = {})
-        @store = {} unless @store.is_a?(Hash)
-        
-        options = prepare_skip_blocks options
-        
-        Utilities.to_array(fields).each {|field| @store[field] = options }
-      end
-      
       def self.skip_if(conditions, &block)
         conditions = conditions.is_a?(Array) ? conditions : [ conditions ]
         @skip_iffing = (@skip_iffing || []) + conditions
@@ -100,14 +57,6 @@ module StatelyValidator
       
       def self.validations
         @validations || []
-      end
-      
-      def self.stores
-        @store || {}
-      end
-      
-      def stores
-        self.class.stores
       end
       
       def self.notes
@@ -221,6 +170,14 @@ module StatelyValidator
         state(name) || false
       end
       
+      def model
+        @model
+      end
+      
+      def set_model(item)
+        @model = item
+      end
+      
       def validate(new_params = nil)
         if new_params.is_a?(Hash)
           @ran = false
@@ -242,7 +199,7 @@ module StatelyValidator
           
           # Now we are going to skip based on internal errors, external errors and state
           next if skip_validation?(opts)
-          next if execute_or_transform(vals, details, opts)
+          next if execute_or_transform?(vals, details, opts)
           
           # Perform a sub validation
           if details[:validator]
@@ -250,11 +207,8 @@ module StatelyValidator
            next
           end
           
-          # Use a validator on a particular field
-          if details[:validator_for]
-            validator_for_field details[:validator_for]
-            next
-          end
+          # Check if we are validating a child
+          return if validate_child?(details)
           
           # Attempt the validation
           err = Validation.validate(vals, details[:fields], details[:validation], self, opts)
@@ -280,70 +234,15 @@ module StatelyValidator
         @errors.empty?
       end
       
-      # Store the transformed / checked values into an object
-      def store_into(object, options = {})
-        return false unless valid? || options[:on_error]
-
-        @params.merge(values(true)).each do |k,v|
-          #Skip any fields not in store if there are fields there
-          next unless stores.empty? || stores[k]
-          
-          # FIrst, if the user put in their own field, only store those
-          next unless !options[:fields].is_a?(Array) || options[:fields].include?(k)
-          
-          # Now, we are going to need to know if we are transforming this item for storage
-          store_opts = stores[k] || {}
-          
-          # Now we are going to skip based on internal errors, external errors and state
-          next if skip_validation?(store_opts)
-          
-          new_val = v
-          
-          # Now, we are going to try different ways to transform the object, if they have
-          # Been given by the validator
-          if store_opts[:method].is_a?(Symbol)
-            if self.respond_to?(store_opts[:method])
-              new_val = case self.method(store_opts[:method]).arity
-              when 1
-                self.send(store_opts[:method], v)
-              when 2
-                self.send(store_opts[:method], object, v)
-              else
-                self.send(store_opts[:method], object, v, k)
-              end
-            elsif object.respond_to?(store_opts[:method])
-              new_val = object.send(store_opts[:method], v)
-            elsif store_opts[:class].is_a?(Module) && store_opts[:class].respond_to?(store_opts[:method])
-              new_val = case store_opts[:class].method(store_opts[:method]).arity
-              when 1
-                store_opts[:class].send(store_opts[:method], v)
-              when 2
-                store_opts[:class].send(store_opts[:method], object, v)
-              else
-                store_opts[:class].send(store_opts[:method], object, v, k)
-              end
-            end
-          end
-          
-          return if self.errors[k]
-          
-          if options[:set] && object.respond_to?(options[:set])
-            case object.method(options[:set]).arity
-            when 1
-              object.send(options[:set], new_val)
-            when 2
-              object.send(options[:set], k, new_val)
-            end
-          else
-            object.send("#{k}=".to_sym, new_val)
-          end
-        end
-      end
-      
       protected
       
       def self.validations
         @validations || []
+      end
+      
+      def stately_generate(validator)
+        v = validator.new
+        states.each {|n,v| v.set_state n, v}
       end
       
       private
@@ -361,25 +260,6 @@ module StatelyValidator
         end
         
         conditions
-      end
-      
-      def execute_or_transform(vals, details, opts)   
-        return false unless [:execute, :transform].any?{|k| details[k]}
-        return true unless Utilities.to_array(details[:fields]).all?{|k| value(k)} # All the required fields are not here
-                  
-        # If we are executing, then just execute and go to the next step
-        if details[:execute]
-          execute vals, details[:method], opts
-          return true
-        end
-        
-        # Transform the relevant fields
-        if details[:transform]
-          Utilities.to_array(details[:fields]).each {|f| transform f, details[:method], opts}
-          return true
-        end
-        
-        false
       end
       
       # Validating with a validator is part of the power of these systems
@@ -410,69 +290,6 @@ module StatelyValidator
             self.send("set_#{name}", k, v)
           end
         end
-      end
-      
-      # Validate this field with the subvalidator
-      def validator_for_field(field)
-        validator = @validator_for[field]
-        validator = Validator.validator_for(validator) if validator.is_a?(Symbol)
-        return unless validator.is_a?(Base)
-        
-        err = []
-        i = -1
-        Utilities.to_array(value(field)).each do |val|
-          i += 1
-          unless val.is_a?(Hash)
-            err[i] = "incorrect"
-            next
-          end
-          
-          subvalidator = stately_generate(validator)
-          subvalidator.params = val
-          subvalidator.validate
-          err[i] = subvalidator.errors unless subvalidator.valid?          
-        end
-        
-        err = err[0] unless value(field).is_a?(Array)
-        set_error field, err unless err.nil? || (err.is_a?(Array) && err.empty?)
-      end
-      
-      def execute(values, method, opts)
-        return unless method
-        method = method.to_sym
-        
-        return send(method, *values) if respond_to?(method) 
-        return opts[:class].send(method, self, *values) if opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
-      end
-      
-      def transform(field, method, opts)
-        return unless method
-        method = method.to_sym
-        
-        val = value(field)
-        return if val.nil? || val.to_s.empty?
-        
-        new_val = nil
-        if new_val.nil? && opts[:class].is_a?(Module) && opts[:class].respond_to?(method)
-          new_val = case opts[:class].method(method).arity
-          when 0
-            opts[:class].send(method)
-          when 1
-            opts[:class].send(method, val)
-          # If only one item is required, then it's likely this function is NOT using the validator as
-          # an argument. So we'll assume that it really just wants the val
-          when -1
-            opts[:class].send(method, val)
-          else
-            opts[:class].send(method, self, val) 
-          end
-        end
-        
-        new_val = send(method, val) if new_val.nil? && respond_to?(method) 
-        new_val = val.send(method) if new_val.nil? && val.respond_to?(method)
-        return unless new_val
-        
-        set_value field, new_val
       end
       
       def skip_validation?(opts)
@@ -519,12 +336,6 @@ module StatelyValidator
         
         # Otherwise, just return false
         false
-      end
-      
-      
-      def stately_generate(validator)
-        v = validator.new
-        states.each {|n,v| v.set_state n, v}
       end
     end
     
