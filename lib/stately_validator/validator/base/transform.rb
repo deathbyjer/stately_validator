@@ -21,6 +21,8 @@ module StatelyValidator
             @validations << item unless @validations.include?(item) # #no Duplicates
           end
           
+          alias_method :execute, :execute_on
+          
           # This function will transform a field into something else
           #
           # The translated value will replace it in "params"

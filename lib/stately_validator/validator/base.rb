@@ -170,14 +170,6 @@ module StatelyValidator
         state(name) || false
       end
       
-      def model
-        @model
-      end
-      
-      def set_model(item)
-        @model = item
-      end
-      
       def validate(new_params = nil)
         if new_params.is_a?(Hash)
           @ran = false

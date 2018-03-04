@@ -43,7 +43,7 @@ module StatelyValidator
       
       def load_validator(name)
         validator = nil
-        validator = name if name.ancestors.include?(Validator::Base)
+        validator = name if name.is_a?(Module) && name.ancestors.include?(Validator::Base)
         validator = Validator.validator_for(name) if name.is_a?(Symbol)
         validator ? validator.new : nil
       end
