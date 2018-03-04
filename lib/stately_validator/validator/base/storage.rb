@@ -60,7 +60,7 @@ module StatelyValidator
         # Store the transformed / checked values into an object
         def store_into(object, options = {})
           return false unless valid? || options[:on_error]
-          set_model = object
+          set_model object
           store! options
         end
         
