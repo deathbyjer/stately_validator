@@ -195,7 +195,7 @@ module StatelyValidator
           
           # Perform a sub validation
           if details[:validator]
-           validate_with_validator(validator, details[:fields])
+           validate_with_validator(details[:validator], details[:fields])
            next
           end
           
