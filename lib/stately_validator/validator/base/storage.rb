@@ -18,7 +18,7 @@ module StatelyValidator
           end
           
           def stores
-            @stores
+            @store || {}
           end
         end
       
@@ -38,7 +38,7 @@ module StatelyValidator
           return false unless valid? || options[:on_error]
           @params.merge(values(true)).each do |k,v|
             #Skip any fields not in store if there are fields there
-            next unless stores.empty? || stores[k]
+            next if stores.empty? || stores[k].nil?
             
             # FIrst, if the user put in their own field, only store those
             next unless !options[:fields].is_a?(Array) || options[:fields].include?(k)
