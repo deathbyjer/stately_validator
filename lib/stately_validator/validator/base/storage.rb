@@ -49,7 +49,7 @@ module StatelyValidator
             # Now we are going to skip based on internal errors, external errors and state
             next if skip_validation?(store_opts)
             
-            new_val = _transform_for_storage k, v, options[:method], options[:class]
+            new_val = _transform_for_storage k, v, store_opts[:method], store_opts[:class]
             
             return if self.errors[k]
             
