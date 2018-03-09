@@ -81,7 +81,7 @@ module StatelyValidator
             end
           end
           
-          return model.send(method, v) if model.respond_to?(method)
+          return model.send(method, val) if model.respond_to?(method)
           
           if klass.is_a?(Module) && klass.respond_to?(method)
             return case klass.method(method).arity
