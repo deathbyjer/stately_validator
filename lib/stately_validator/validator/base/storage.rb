@@ -40,7 +40,7 @@ module StatelyValidator
             #Skip any fields not in store if there are fields there
             next if stores.empty? || stores[k].nil?
             
-            # First, if the user put in their own field, only store those
+            # FIrst, if the user put in their own field, only store those
             next unless !options[:fields].is_a?(Array) || options[:fields].include?(k)
             
             # Now, we are going to need to know if we are transforming this item for storage
@@ -49,7 +49,7 @@ module StatelyValidator
             # Now we are going to skip based on internal errors, external errors and state
             next if skip_validation?(store_opts)
             
-            new_val = _transform_for_storage k, v, store_opts[:method], store_opts[:class]
+            new_val = v
             
             return if self.errors[k]
             
@@ -67,7 +67,7 @@ module StatelyValidator
         protected
         
         def _transform_for_storage(key, val, method, klass = nil)  
-          return val unless method.is_a?(Symbol)
+          return unless method.is_a?(Symbol)
           # Now, we are going to try different ways to transform the object, if they have
           # Been given by the validator
           if self.respond_to?(method)
@@ -81,7 +81,7 @@ module StatelyValidator
             end
           end
           
-          return model.send(method, val) if model.respond_to?(method)
+          return model.send(method, v) if model.respond_to?(method)
           
           if klass.is_a?(Module) && klass.respond_to?(method)
             return case klass.method(method).arity
@@ -92,9 +92,7 @@ module StatelyValidator
             else
               klass.send(method, model, val, key)
             end
-          end  
-
-          val
+          end        
         end
         
         def _store_set(key, val, options)            

@@ -9,16 +9,13 @@ module StatelyValidator
         module ClassMethods
           # We can assign a specific validator to operate on a certain parameter (item or array)
           def validate_child(field, validator, options = {})
-            @validations = [] unless @validations.is_a?(Array)
-            
             # Also, take note of this validator
             # We are going to use it to store, if we want to store
             @child_validators = {} unless @validator_for.is_a?(Hash)
             @child_validators[field] = validator
             
             options = prepare_skip_blocks options
-            item = { child_validator: true, child: field, options: options, validators: nil }
-            @validations << item unless @validations.include?(item)
+            add_to_validation_steps(child_validator: true, child: field, options: options, validators: nil)
           end
           
           def store_child(field, options = {})

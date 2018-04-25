@@ -18,11 +18,30 @@ module StatelyValidator
         @name
       end
       
-      def self.validator(validator, options = {})
+      def self.custom_hash(item)
+        Digest::MD5.hexdigest Marshal::dump custom_sort(item)
+      end
+      
+      def self.custom_sort(item)
+        if item.is_a?(Array)
+          item.map{|a| custom_sort(item)}
+        elsif item.is_a?(Hash)
+          item.keys.each {|k| item[k] = custom_sort item[k]}
+          item.sort.to_h
+        else
+          item
+        end
+      end
+      
+      def self.add_to_validation_steps(item)
         @validations = [] unless @validations.is_a?(Array)
+        item[:hash] = custom_hash item
+        @validations << item if @validations.index{|v| v[:hash] == item[:hash]}.nil?
+      end
+      
+      def self.validator(validator, options = {})
         options = prepare_skip_blocks options
-        item = { validator: validator, options: options }
-        @validations << item unless @validations.include?(item)
+        add_to_validation_steps(validator: validator, options: options)
       end
       
       # This is the main method for setting up our validations.
@@ -30,13 +49,10 @@ module StatelyValidator
       def self.validate(fields, validation, options = {})
         return validator(options[:validator], options) if fields.nil? && validation == :validator
         
-        @validations = [] unless @validations.is_a?(Array)
-        
         options = prepare_skip_blocks options
         
         # We just need to log the validations, in order, for when we actually call the validation
-        item = { fields: fields, validation: validation, options: options }
-        @validations << item unless @validations.include?(item) # No Duplicates
+        add_to_validation_steps(fields: fields, validation: validation, options: options)
       end
       
       def self.skip_if(conditions, &block)
@@ -227,10 +243,6 @@ module StatelyValidator
       end
       
       protected
-      
-      def self.validations
-        @validations || []
-      end
       
       def stately_generate(validator)
         v = validator.new

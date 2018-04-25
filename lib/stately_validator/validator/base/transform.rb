@@ -13,12 +13,8 @@ module StatelyValidator
           # The fields argument, in this case, would be all the fields that need to be free-and-clear of errors#
           # in order to proceed with the execution
           def execute_on(fields, method, options = {})
-            @validations = [] unless @validations.is_a?(Array)
-            
             options = prepare_skip_blocks options
-            
-            item = { execute: true, fields: fields, method: method, options: options }
-            @validations << item unless @validations.include?(item) # #no Duplicates
+            add_to_validation_steps(execute: true, fields: fields, method: method, options: options)
           end
           
           alias_method :execute, :execute_on
@@ -27,12 +23,8 @@ module StatelyValidator
           #
           # The translated value will replace it in "params"
           def transform(fields, method, options = {})
-            @validations = [] unless @validations.is_a?(Array)
-            
             options = prepare_skip_blocks options
-           
-            item = { transform: true, fields: fields, method: method, options: options }
-            @validations << item unless @validations.include?(item)
+            add_to_validation_steps(transform: true, fields: fields, method: method, options: options)
           end
         end
         
