@@ -28,7 +28,7 @@ module StatelyValidator
         elsif item.is_a?(Hash)
           item.keys.each {|k| item[k] = custom_sort item[k]}
           item.sort.to_h
-        elsif item.is_a?
+        else
           begin
             Marshal.dump item.to_s
             item.to_s
