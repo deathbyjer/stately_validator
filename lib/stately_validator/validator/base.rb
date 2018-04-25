@@ -19,7 +19,7 @@ module StatelyValidator
       end
       
       def self.custom_hash(item)
-        Digest::MD5.hexdigest Marshal::dump custom_sort(item)
+        Digest::MD5.hexdigest Marshal::dump(custom_sort(item))
       end
       
       def self.custom_sort(item)
