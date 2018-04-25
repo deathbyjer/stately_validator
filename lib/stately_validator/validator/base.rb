@@ -28,8 +28,13 @@ module StatelyValidator
         elsif item.is_a?(Hash)
           item.keys.each {|k| item[k] = custom_sort item[k]}
           item.sort.to_h
-        else
-          item
+        elsif item.is_a?
+          begin
+            Marshal.dump item.to_s
+            item.to_s
+          rescue
+            "cannot_dump"
+          end
         end
       end
       
