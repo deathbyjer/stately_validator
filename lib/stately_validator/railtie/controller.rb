@@ -30,12 +30,16 @@ module StatelyValidator
         validator.set_action_controller self
         (@validator_states || {}).each {|n,v| validator.set_state n, v}
         
-        Rails.logger.info params.send(params.respond_to?(:to_unsafe_h) ? :to_unsafe_h : :to_h).inspect
         p = {}; params.send(params.respond_to?(:to_unsafe_h) ? :to_unsafe_h : :to_h).each {|k,v| p[k.to_s.to_sym] = v}
         
         validator.params = p
         (@validator_values || {}).each {|n,v| validator.set_value n, v}
-        validator.validate unless options[:dont_validate]
+        begin
+          validator.validate unless options[:dont_validate]
+        rescue Exception => e
+          Rails.logger.error e.message
+          Rails.logger.error e.backtrace.join("\n")
+        end
         validator
       end
       
