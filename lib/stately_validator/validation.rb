@@ -22,7 +22,8 @@ module StatelyValidator
     def self.validate(values, names = [], validation = nil, validator = nil, options = {})
       return unless options.is_a?(Hash) && validation
       Rails.logger.info validation.to_s
-      validations = validation_for(validation) if validation.is_a?(Symbol)
+      Rails.logger.info validation_for(validation.to_sym).inspect
+      validations = validation_for(validation.to_sym) if validation.is_a?(Symbol) || validation.is_a?(String)
       
       result = nil
       (validations || []).each do |validation|
