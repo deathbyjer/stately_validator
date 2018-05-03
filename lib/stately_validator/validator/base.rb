@@ -283,6 +283,7 @@ module StatelyValidator
         
         # Copy in
         iterate_on.each do |name, hash|
+          next unless hash
           hash.each do |k,v| 
             next unless fields == :all || fields.include?(k)
             validator.send("set_#{name}", k, v)
@@ -294,6 +295,8 @@ module StatelyValidator
         # Copy out
         iterate_on.keys.each do |name|
           hash = validator.send("#{name}s".to_sym)
+          next unless hash
+          
           hash.each do |k,v| 
             next unless fields == :all || fields.include?(k)
             self.send("set_#{name}", k, v)

@@ -73,7 +73,7 @@ module StatelyValidator
               err[k] = _validate_child validator, v
               err.delete(k) unless err[k]
             end
-          else
+          elsif value.is_a?(Array)
             value.each_index do |i|
               err[i] = _validate_child validator, value[i]
               err.delete(i) unless err[i]

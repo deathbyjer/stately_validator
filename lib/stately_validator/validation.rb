@@ -2,7 +2,7 @@ module StatelyValidator
   class Validation    
     def self.validation_for(name)
       @validations = {} unless @validations.is_a?(Hash)
-      @validations[name.to_sym]
+      @validations[name.to_sym] || []
     end
     
     def self.register_validation(validation)
