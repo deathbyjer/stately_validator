@@ -21,10 +21,11 @@ module StatelyValidator
     
     def self.validate(values, names = [], validation = nil, validator = nil, options = {})
       return unless options.is_a?(Hash) && validation
+      Rails.logger.info validation.to_s
       validations = validation_for(validation) if validation.is_a?(Symbol)
       
       result = nil
-      validations.each do |validation|
+      (validations || []).each do |validation|
         # Skip if the value(s) is/are empty and we don't process on nil
         next unless validation.on_nil || Utilities.to_array(values).all?{|v| not v.nil? || v.to_s.empty?}
         
