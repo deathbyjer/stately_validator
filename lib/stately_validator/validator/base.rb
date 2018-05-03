@@ -24,8 +24,10 @@ module StatelyValidator
       
       def self.custom_sort(item)
         if item.is_a?(Array)
+          item = item.dup
           item.map{|a| custom_sort(a)}
         elsif item.is_a?(Hash)
+          item = item.dup
           item.keys.each {|k| item[k] = custom_sort item[k]}
           item.sort.to_h
         else
