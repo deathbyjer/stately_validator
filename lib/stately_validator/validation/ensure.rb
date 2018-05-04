@@ -47,6 +47,12 @@ module StatelyValidator
             cast(values) { |v| v.to_s }
           when :symbol
             cast(values) { |v| v.to_sym }
+          when :date
+            cast(values) { |v| v.is_a?(String) ? Date.parse(v) : v.to_date}
+          when :datetime
+            cast(values) { |v| v.is_a?(String) ? DateTime.parse(v) : v.to_datetime}
+          when :time
+            cast(values) { |v| v.is_a?(String) ? Time.parse(v) : v.to_time}
           else
             raise unless check_types(values, options[:type])
             values
