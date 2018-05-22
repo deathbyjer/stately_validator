@@ -49,7 +49,7 @@ module StatelyValidator
             # Now we are going to skip based on internal errors, external errors and state
             next if skip_validation?(store_opts)
             
-            new_val = v
+            new_val = _transform_for_storage k, v, options[:method], options[:class]
             
             return if self.errors[k]
             
@@ -67,7 +67,9 @@ module StatelyValidator
         protected
         
         def _transform_for_storage(key, val, method, klass = nil)  
-          return unless method.is_a?(Symbol)
+          # Return the value unless method is a symbol
+          return val unless method.is_a?(Symbol)
+          
           # Now, we are going to try different ways to transform the object, if they have
           # Been given by the validator
           if self.respond_to?(method)
@@ -93,6 +95,9 @@ module StatelyValidator
               klass.send(method, model, val, key)
             end
           end        
+          
+          # If all these have failed, then just return the value
+          val
         end
         
         def _store_set(key, val, options)            
