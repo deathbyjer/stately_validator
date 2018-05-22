@@ -49,15 +49,11 @@ module StatelyValidator
             # Now we are going to skip based on internal errors, external errors and state
             next if skip_validation?(store_opts)
             
-            ::Rails.logger.info options.inspect
-            new_val = _transform_for_storage k, v, options[:method], options[:class]
-            ::Rails.logger.info v.inspect
-            ::Rails.logger.info new_val.inspect
-            
+            new_val = _transform_for_storage k, v, store_opts[:method], store_opts[:class]            
             
             return if self.errors[k]
             
-            _store_set k, new_val, options
+            _store_set k, new_val, store_opts
           end
         end
         
