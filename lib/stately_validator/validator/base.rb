@@ -48,13 +48,13 @@ module StatelyValidator
       
       def self.validator(validator, options = {})
         options = prepare_skip_blocks options
-        add_to_validation_steps(validator: validator, options: options)
+        add_to_validation_steps(validator: validator, fields: options[:fields] || :all, options: options)
       end
       
       # This is the main method for setting up our validations.
       # The order in which the methods are called are important.
       def self.validate(fields, validation, options = {})
-        return validator(options[:validator], options) if fields.nil? && validation == :validator
+        return validator(options[:validator], options.merge(fields: fields)) validation == :validator
         
         options = prepare_skip_blocks options
         
