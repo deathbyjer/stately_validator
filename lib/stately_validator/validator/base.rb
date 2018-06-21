@@ -277,19 +277,22 @@ module StatelyValidator
       # It will run the sub-validator, copy the associated fields into the validator and then
       # run the validator and copy the output back into the parent validator
       def validate_with_validator(validator, fields)
+        puts "Validate with Validator"
         validator = Validator.validator_for(validator) if validator.is_a?(Symbol)
         return unless validator.is_a?(Base)
         
         # Instantiate the validator
         validator = validator.new
         
+        puts fields.inspect
         # Copy in
         if fields == :all
-          validator.set_params = values
+          validator.params = values
         else
           values.select{|k,v| fields.include?(k)}.each{|name, value| validator.set_param(name, value) }
         end
         
+        puts validator.params.inspect
         validator.validate # Perform the validations
         
         # Copy out
