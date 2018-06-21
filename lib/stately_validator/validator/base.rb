@@ -280,30 +280,21 @@ module StatelyValidator
         validator = Validator.validator_for(validator) if validator.is_a?(Symbol)
         return unless validator.is_a?(Base)
         
-        # Gather the items we will copy in and then out
-        iterate_on = {value: values, param: params, error: errors, state: states}
+        # Instantiate the validator
+        validator = validator.new
         
         # Copy in
-        iterate_on.each do |name, hash|
-          next unless hash
-          hash.each do |k,v| 
-            next unless fields == :all || fields.include?(k)
-            validator.send("set_#{name}", k, v)
-          end
+        if fields == :all
+          validator.set_params = values
+        else
+          values.select{|k,v| fields.include?(k)}.each{|name, value| validator.set_param(name, value) }
         end
         
         validator.validate # Perform the validations
         
         # Copy out
-        iterate_on.keys.each do |name|
-          hash = validator.send("#{name}s".to_sym)
-          next unless hash
-          
-          hash.each do |k,v| 
-            next unless fields == :all || fields.include?(k)
-            self.send("set_#{name}", k, v)
-          end
-        end
+        validator.errors.each {|n,e| set_error(n, e)}
+        validator.values.each {|n,v| set_value(n, v)}
       end
       
       def skip_validation?(opts)
