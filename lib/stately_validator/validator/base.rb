@@ -54,7 +54,7 @@ module StatelyValidator
       # This is the main method for setting up our validations.
       # The order in which the methods are called are important.
       def self.validate(fields, validation, options = {})
-        return validator(options[:validator], options.merge(fields: fields)) validation == :validator
+        return validator(options[:validator], options.merge(fields: fields)) if validation == :validator
         
         options = prepare_skip_blocks options
         
