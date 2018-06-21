@@ -279,12 +279,11 @@ module StatelyValidator
       def validate_with_validator(validator, fields)
         puts "Validate with Validator"
         validator = Validator.validator_for(validator) if validator.is_a?(Symbol)
-        return unless validator.is_a?(Base)
+        return unless validator <= Base
         
         # Instantiate the validator
-        validator = validator.new
+        validator = validator.new 
         
-        puts fields.inspect
         # Copy in
         if fields == :all
           validator.params = values

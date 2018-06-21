@@ -1,7 +1,7 @@
 module StatelyValidator
   class Validator
     def self.validator_for(name)
-      return name if name.is_a?(Base)
+      return name if name <= Base
       @validators = {} unless @validators.is_a?(Hash)
       @validators[name.to_sym]
     end
