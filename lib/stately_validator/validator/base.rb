@@ -290,6 +290,8 @@ module StatelyValidator
           values.select{|k,v| fields.include?(k)}.each{|name, value| validator.set_param(name, value) }
         end
         
+        states.each {|k,v| validator.set_state k, v }
+        
         validator.validate # Perform the validations
         
         # Copy out
