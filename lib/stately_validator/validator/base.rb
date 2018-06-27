@@ -202,6 +202,8 @@ module StatelyValidator
         @errors = {}
         @internal = {}
         
+        Rails.logger.info "VALIDATIONS"
+        Rails.logger.info self.class.validations.inspect
         self.class.validations.each do |details|
           # Are we skipping this because some of the items have failed their validations?
           opts = details[:options]
@@ -277,6 +279,8 @@ module StatelyValidator
       # It will run the sub-validator, copy the associated fields into the validator and then
       # run the validator and copy the output back into the parent validator
       def validate_with_validator(validator, fields)
+        Rails.logger.info "VALIDATOR"
+        Rails.logger.info validator.inspect
         validator = Validator.validator_for(validator) if validator.is_a?(Symbol)
         return unless validator <= Base
         
