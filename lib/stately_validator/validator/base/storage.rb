@@ -21,14 +21,6 @@ module StatelyValidator
             @store || {}
           end
         end
-      
-        def model
-          @model
-        end
-        
-        def set_model(item)
-          @model = item
-        end
         
         def stores
           self.class.stores

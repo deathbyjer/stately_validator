@@ -22,10 +22,17 @@ module StatelyValidator
         @validator_values[name] = value
       end
       
+      def set_validator_model(model)
+        @validator_model = model
+      end
+      
       def validate_with(name, options = {})
         # Find the validator
         validator = load_validator name
         return nil unless validator
+        
+        # Set a model, if it exists
+        validator.set_model(@validator_model) if @validator_model
         
         validator.set_action_controller self
         (@validator_states || {}).each {|n,v| validator.set_state n, v}

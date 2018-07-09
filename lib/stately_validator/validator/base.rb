@@ -81,6 +81,18 @@ module StatelyValidator
       def self.validations
         @validations || []
       end
+     
+      # Model
+      #
+      # The model that is connected to this validator
+      
+      def model
+        @model
+      end
+      
+      def set_model(item)
+        @model = item
+      end
       
       def self.notes
         @notes || []
