@@ -54,7 +54,7 @@ module StatelyValidator
           when :time
             cast(values) { |v| v.is_a?(String) ? Time.parse(v) : v.to_time}
           when :boolean
-            cast(values) { |v| !v || (v.is_a?(String) && v == "false") || v.to_i == 0 ?  ? false : true }
+            cast(values) { |v| (!v || (v.is_a?(String) && v == "false") || v.to_i == 0) ? false : true }
           else
             raise unless check_types(values, options[:type])
             values
