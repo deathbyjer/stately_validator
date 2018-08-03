@@ -97,28 +97,35 @@ module StatelyValidator
           return model.send("#{key}=".to_sym, val) unless options[:set]
           
           Utilities.to_array(options[:set]).each do |set|
-            # First, let's try these out for the model
-            if model.respond_to?(set)
-              case model.method(set).arity
-              when 0
-                model.send(set)
-              when 1
-                model.send(set, val)
-              when 2
-                model.send(set, key, val)
-              end
-            # Otherwise, if the set method exists here, use *that*
-            elsif respond_to?(set)
-              case method(set).arity
-              when 1
-                send(set, val)
-              when 2
-                send(set, model, val)
-              when 3
-                send(set, model, key, val)
-              end
-            end            
+            if options[:iterate]
+              Utilities.to_array(val).each {|v| _store_set_method(model, set, key, v) }
+            else
+              _store_set_method(model, set. key, val)
+            end
           end
+        end
+        
+        def _store_set_method(model, set, key, val)
+          if model.respond_to?(set)
+            case model.method(set).arity
+            when 0
+              model.send(set)
+            when 1
+              model.send(set, val)
+            when 2
+              model.send(set, key, val)
+            end
+          # Otherwise, if the set method exists here, use *that*
+          elsif respond_to?(set)
+            case method(set).arity
+            when 1
+              send(set, val)
+            when 2
+              send(set, model, val)
+            when 3
+              send(set, model, key, val)
+            end
+          end                
         end
         
       end
