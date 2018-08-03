@@ -98,16 +98,16 @@ module StatelyValidator
           
           Utilities.to_array(options[:set]).each do |set|
             if options[:iterate]
-              Utilities.to_array(val).each {|v| _store_set_method(model, set, key, v) }
+              Utilities.to_array(val).each {|v| _store_set_method(model, set, key, v, options) }
             else
-              _store_set_method(model, set. key, val)
+              _store_set_method(model, set. key, val, options)
             end
           end
         end
         
-        def _store_set_method(model, set, key, val)
+        def _store_set_method(model, set, key, val, options = {})
           if model.respond_to?(set)
-            case model.method(set).arity
+            case options[:set_arity] || model.method(set).arity
             when 0
               model.send(set)
             when 1
@@ -117,7 +117,7 @@ module StatelyValidator
             end
           # Otherwise, if the set method exists here, use *that*
           elsif respond_to?(set)
-            case method(set).arity
+            case options[:set_arity] || method(set).arity
             when 1
               send(set, val)
             when 2
