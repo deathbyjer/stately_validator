@@ -98,24 +98,24 @@ module StatelyValidator
           
           Utilities.to_array(options[:set]).each do |set|
             # First, let's try these out for the model
-            if options[:set] && model.respond_to?(options[:set])
-              case model.method(options[:set]).arity
+            if model.respond_to?(set)
+              case model.method(set).arity
               when 0
-                model.send(options[:set])
+                model.send(set)
               when 1
-                model.send(options[:set], val)
+                model.send(set, val)
               when 2
-                model.send(options[:set], key, val)
+                model.send(set, key, val)
               end
             # Otherwise, if the set method exists here, use *that*
-            elsif respond_to?(options[:set])
-              case method(options[:set]).arity
+            elsif respond_to?(set)
+              case method(set).arity
               when 1
-                send(options[:set], val)
+                send(set, val)
               when 2
-                send(options[:set], model, val)
+                send(set, model, val)
               when 3
-                send(options[:set], model, key, val)
+                send(set, model, key, val)
               end
             end            
           end
