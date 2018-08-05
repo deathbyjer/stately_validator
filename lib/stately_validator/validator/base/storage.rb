@@ -98,16 +98,23 @@ module StatelyValidator
           
           Utilities.to_array(options[:set]).each do |set|
             if options[:iterate]
-              Utilities.to_array(val).each {|v| _store_set_method(model, set, key, v, options) }
+              Utilities.to_array(val).each {|v| _store_set_method(model, set, key, v) }
             else
-              _store_set_method(model, set. key, val, options)
+              _store_set_method(model, set. key, val)
             end
           end
         end
         
-        def _store_set_method(model, set, key, val, options = {})
+        def _store_set_method(model, set, key, val)
+          options = {}
+          # If the "method" is a hash, then we'll make use of those options
+          if set.is_a?(Hash)
+            options.merge!(set)
+            set = options[:method]
+          end
+        
           if model.respond_to?(set)
-            case options[:set_arity] || model.method(set).arity
+            case options[:arity] || model.method(set).arity
             when 0
               model.send(set)
             when 1
@@ -117,7 +124,7 @@ module StatelyValidator
             end
           # Otherwise, if the set method exists here, use *that*
           elsif respond_to?(set)
-            case options[:set_arity] || method(set).arity
+            case options[:arity] || method(set).arity
             when 1
               send(set, val)
             when 2
