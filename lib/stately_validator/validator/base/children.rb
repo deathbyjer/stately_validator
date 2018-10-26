@@ -86,7 +86,7 @@ module StatelyValidator
         def _validate_child(validator, val)
           return "incorrect" unless val.is_a?(Hash)
           validator = stately_generate validator
-          validator.set_state model if model
+          validator.set_model model if model
           validator.params = val
           validator.validate
           validator.valid? ? false : validator.errors
