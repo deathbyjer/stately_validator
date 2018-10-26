@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'stately_validator'
-  s.version     = '0.0.1'
+  s.version     = '0.1.0'
   s.date        = '2017-06-28'
   s.summary     = "Simple Validators, State-Aware"
   s.description = "Validators on Models should validate data, but data does not always match business-logic needs. We can use Stately Validators to match our business logic and maintain only data-specific validations on the models"
