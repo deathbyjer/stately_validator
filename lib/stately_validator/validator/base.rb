@@ -302,7 +302,7 @@ module StatelyValidator
           values.select{|k,v| fields.include?(k)}.each{|name, value| validator.set_param(name, value) }
         end
         
-        validator.set_model = self.model if self.model
+        validator.set_model self.model if self.model
         
         states.each {|k,v| validator.set_state k, v }
         
