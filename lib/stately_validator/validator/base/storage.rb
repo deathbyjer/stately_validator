@@ -100,7 +100,7 @@ module StatelyValidator
             if options[:iterate]
               Utilities.to_array(val).each {|v| _store_set_method(model, set, key, v) }
             else
-              _store_set_method(model, set. key, val)
+              _store_set_method(model, set, key, val)
             end
           end
         end
