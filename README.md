@@ -1,3 +1,5 @@
+This has been replaced for usage with https://github.com/deathbyjer/stateful_validator.
+
 # stately_validator
 
 This is a Ruby gem that has been built to allow for validations with state.
